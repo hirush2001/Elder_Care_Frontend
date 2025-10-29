@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
-import LoginPage from "./client/Login";
+import AuthPortal from "./client/AuthPortal";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -12,7 +12,8 @@ function App() {
       <Routes>
       
         {/* Optional /login route */}
-        <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/authportal" element={<AuthPortal />} />
         {/* You can add more routes like dashboards here */}
       </Routes>
     </BrowserRouter>
