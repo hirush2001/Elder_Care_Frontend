@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
-import AuthPortal from "./client/AuthPortal";
+import GuardianDashboard from "./pages/Guardian/GuardianDashboard";
+import Login from "./pages/Guardian/Login";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -11,9 +12,11 @@ function App() {
 
       <Routes>
       
-        {/* Optional /login route */}
+        
 
-        <Route path="/authportal" element={<AuthPortal />} />
+        <Route path="/guardiandashboard" element={<GuardianDashboard />} />
+        <Route path="/login" element={<Login />} />
+
         {/* You can add more routes like dashboards here */}
       </Routes>
     </BrowserRouter>
