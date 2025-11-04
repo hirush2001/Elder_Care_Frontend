@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import GuardianDashboard from "./pages/Guardian/GuardianDashboard";
 import Login from "./pages/Guardian/Login";
+import HealthRecordManage from "./pages/Guardian/HealthRecordManage";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         
 
         <Route path="/guardiandashboard" element={<GuardianDashboard />} />
+        <Route path="/healthRecord" element={<HealthRecordManage />} />
         <Route path="/login" element={<Login />} />
 
         {/* You can add more routes like dashboards here */}

@@ -135,7 +135,9 @@ export default function GuardianDashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center gap-2 cursor-pointer">
+        <div
+           onClick={() => navigate("/healthRecord")}
+          className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center gap-2 cursor-pointer">
           <AiOutlineHeart className="text-blue-700 w-10 h-10" />
           <h2 className="text-lg font-semibold text-blue-700">Health Records</h2>
           <p className="text-3xl font-bold mt-2">{healthRecords.length}</p>
