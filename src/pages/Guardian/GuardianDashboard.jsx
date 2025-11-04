@@ -144,7 +144,9 @@ export default function GuardianDashboard() {
           <p className="text-gray-500 text-sm mt-1">Total Entries</p>
         </div>
 
-        <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center gap-2 cursor-pointer">
+        <div
+        onClick={() => navigate("/medicationmanage")}
+          className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center gap-2 cursor-pointer">
           <MdNotificationsActive className="text-green-700 w-10 h-10" />
           <h2 className="text-lg font-semibold text-green-700">Reminders</h2>
           <p className="text-3xl font-bold mt-2">{reminders.length}</p>
