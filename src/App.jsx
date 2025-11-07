@@ -4,6 +4,8 @@ import GuardianDashboard from "./pages/Guardian/GuardianDashboard";
 import Login from "./pages/Guardian/Login";
 import HealthRecordManage from "./pages/Guardian/HealthRecordManage";
 import MedicationManage from "./pages/Guardian/Reminder";
+import MyCareRequests from "./pages/Guardian/CareGiverRequest";
+import ChatBot from "./components/chatbot";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
         <Route path="/guardiandashboard" element={<GuardianDashboard />} />
         <Route path="/healthRecord" element={<HealthRecordManage />} />
         <Route path="/medicationmanage" element={<MedicationManage />} />
+        <Route path="/carerequest" element={<MyCareRequests />} />
+        <Route path="/chatbot" element={<ChatBot />} />
         <Route path="/login" element={<Login />} />
 
         {/* You can add more routes like dashboards here */}
