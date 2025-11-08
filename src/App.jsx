@@ -6,6 +6,8 @@ import HealthRecordManage from "./pages/Guardian/HealthRecordManage";
 import MedicationManage from "./pages/Guardian/Reminder";
 import MyCareRequests from "./pages/Guardian/CareGiverRequest";
 import ChatBot from "./components/chatbot";
+import Profile from "./pages/Guardian/Profile";
+import ElderProfileForm from "./pages/Guardian/ElderProfileList";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -22,6 +24,8 @@ function App() {
         <Route path="/healthRecord" element={<HealthRecordManage />} />
         <Route path="/medicationmanage" element={<MedicationManage />} />
         <Route path="/carerequest" element={<MyCareRequests />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profilelist" element={<ElderProfileForm />} />
         <Route path="/chatbot" element={<ChatBot />} />
         <Route path="/login" element={<Login />} />
 
