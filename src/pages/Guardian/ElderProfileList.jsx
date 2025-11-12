@@ -1,4 +1,3 @@
-// ElderProfileForm.jsx
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaUserCircle, FaEdit, FaSave, FaTimes } from "react-icons/fa";
@@ -12,7 +11,22 @@ export default function ElderProfileForm({ regId }) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/profile/${regId}`);
+        //  Get token (you may store it in localStorage or sessionStorage after login)
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          toast.error("Unauthorized: Missing token");
+          return;
+        }
+
+        //  Include Authorization header
+        const res = await axios.get(
+          `${import.meta.env.VITE_BACKEND_URL}/profile/guardian`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
         setProfile(res.data);
         setFormData(res.data);
       } catch (err) {
@@ -20,8 +34,9 @@ export default function ElderProfileForm({ regId }) {
         toast.error("Failed to load profile");
       }
     };
+
     fetchProfile();
-  }, [regId]);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,7 +44,23 @@ export default function ElderProfileForm({ regId }) {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`${import.meta.env.VITE_BACKEND_URL}/profile/${regId}`, formData);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Unauthorized: Missing token");
+        return;
+      }
+
+      //  If you update using regId, make sure it exists in the profile data
+      const idToUpdate = profile.regId || regId;
+
+      await axios.put(
+        `${import.meta.env.VITE_BACKEND_URL}/profile/${idToUpdate}`,
+        formData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       setProfile(formData);
       setEditMode(false);
       toast.success("Profile updated successfully!");
@@ -44,6 +75,7 @@ export default function ElderProfileForm({ regId }) {
 
   return (
     <div className="bg-white shadow-lg rounded-3xl p-8 w-[90%] max-w-4xl mx-auto mt-6">
+      {/* (UI part unchanged) */}
       <div className="flex items-center space-x-6">
         {profile.profilePicture ? (
           <img
@@ -55,7 +87,9 @@ export default function ElderProfileForm({ regId }) {
           <FaUserCircle className="w-28 h-28 text-gray-400" />
         )}
         <div>
-          <h2 className="text-2xl font-semibold text-gray-800">{profile.fullName}</h2>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {profile.fullName}
+          </h2>
           <p className="text-gray-500">Age: {profile.age}</p>
           <p className="text-gray-500">Gender: {profile.gender}</p>
           <p className="text-gray-500">Email: {profile.email}</p>
@@ -63,12 +97,28 @@ export default function ElderProfileForm({ regId }) {
       </div>
 
       <div className="mt-6 space-y-2">
-        <p className="text-gray-700"><span className="font-semibold">Phone:</span> {profile.phone}</p>
-        <p className="text-gray-700"><span className="font-semibold">Address:</span> {profile.address}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Name:</span> {profile.guardianFullName}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Relationship:</span> {profile.guardianRelationship}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Phone:</span> {profile.guardianPhone}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Email:</span> {profile.guardianEmail}</p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Phone:</span> {profile.phone}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Address:</span> {profile.address}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Guardian Name:</span>{" "}
+          {profile.guardianFullName}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Guardian Relationship:</span>{" "}
+          {profile.guardianRelationship}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Guardian Phone:</span>{" "}
+          {profile.guardianPhone}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Guardian Email:</span>{" "}
+          {profile.guardianEmail}
+        </p>
       </div>
 
       <div className="mt-6 flex justify-end">

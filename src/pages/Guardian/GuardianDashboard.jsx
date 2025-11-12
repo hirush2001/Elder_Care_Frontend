@@ -192,7 +192,7 @@ axios
         </div>
         <div className="flex gap-4">
           <button
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate("/profilelist")}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
           >
             <FaUserCircle className="w-7 h-7" />
