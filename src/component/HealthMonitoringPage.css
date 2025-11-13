@@ -1,0 +1,214 @@
+.page-2 {
+    background: linear-gradient(135deg, #d1fae5 0%, #ccfbf1 50%, #dbeafe 100%);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  
+  .page-2 .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .page-2 .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    background: white;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  
+  .page-2 .back-btn:hover {
+    color: #111827;
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+    transform: translateX(-4px);
+  }
+  
+  .page-2 .card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    margin-top: 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .page-2 .card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .page-2 .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .page-2 .icon-box {
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    min-height: 60px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .page-2 .icon-box i {
+    font-size: 2rem;
+    color: white;
+  }
+  
+  .page-2 .teal-gradient {
+    background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%);
+  }
+  
+  .page-2 .card-title {
+    font-size: 2rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+  
+  .page-2 .subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .page-2 .form-content {
+    margin-bottom: 2rem;
+  }
+  
+  .page-2 .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .page-2 label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .page-2 input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background-color: #f9fafb;
+  }
+  
+  .page-2 input:focus {
+    outline: none;
+    border-color: #14b8a6;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+  }
+  
+  .page-2 input::placeholder {
+    color: #9ca3af;
+  }
+  
+  .page-2 .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  
+  .page-2 .btn-teal {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%);
+  }
+  
+  .page-2 .btn-teal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+  
+  .page-2 .btn-teal:active {
+    transform: translateY(0);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .page-2 {
+      padding: 1.5rem;
+    }
+  
+    .page-2 .card {
+      padding: 2rem;
+    }
+  
+    .page-2 .card-title {
+      font-size: 1.75rem;
+    }
+  
+    .page-2 .icon-box {
+      min-width: 50px;
+      min-height: 50px;
+      padding: 0.75rem;
+    }
+  
+    .page-2 .icon-box i {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .page-2 {
+      padding: 1rem;
+    }
+  
+    .page-2 .card {
+      padding: 1.5rem;
+    }
+  
+    .page-2 .grid-2 {
+      grid-template-columns: 1fr;
+    }
+  
+    .page-2 .card-title {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .page-2 .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+  
+    .page-2 .icon-box {
+      align-self: flex-start;
+    }
+  }

@@ -1,0 +1,180 @@
+.page-1 {
+    background: linear-gradient(135deg, #e0f2fe 0%, #fae8ff 50%, #fce7f3 100%);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  
+  .page-1 .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .page-1 .card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    margin-top: 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .page-1 .card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .page-1 .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .page-1 .icon-box {
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    min-height: 60px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .page-1 .icon-box i {
+    font-size: 2rem;
+    color: white;
+  }
+  
+  .page-1 .purple-gradient {
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  }
+  
+  .page-1 .card-title {
+    font-size: 2rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+  
+  .page-1 .subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .page-1 .form-content {
+    margin-bottom: 2rem;
+  }
+  
+  .page-1 .form-group {
+    margin-bottom: 1.5rem;
+  }
+  
+  .page-1 label {
+    display: block;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+  }
+  
+  .page-1 input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    background-color: #f9fafb;
+  }
+  
+  .page-1 input:focus {
+    outline: none;
+    border-color: #a855f7;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+  }
+  
+  .page-1 input::placeholder {
+    color: #9ca3af;
+  }
+  
+  .page-1 .btn-purple {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  }
+  
+  .page-1 .btn-purple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+  
+  .page-1 .btn-purple:active {
+    transform: translateY(0);
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .page-1 {
+      padding: 1.5rem;
+    }
+  
+    .page-1 .card {
+      padding: 2rem;
+    }
+  
+    .page-1 .card-title {
+      font-size: 1.75rem;
+    }
+  
+    .page-1 .icon-box {
+      min-width: 50px;
+      min-height: 50px;
+      padding: 0.75rem;
+    }
+  
+    .page-1 .icon-box i {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .page-1 {
+      padding: 1rem;
+    }
+  
+    .page-1 .card {
+      padding: 1.5rem;
+    }
+  
+    .page-1 .card-title {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .page-1 .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+  
+    .page-1 .icon-box {
+      align-self: flex-start;
+    }
+  }

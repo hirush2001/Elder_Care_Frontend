@@ -1,0 +1,209 @@
+.page-3 {
+    background: linear-gradient(135deg, #fed7aa 0%, #fecaca 50%, #fce7f3 100%);
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  
+  .page-3 .container-large {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .page-3 .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7280;
+    background: white;
+    border: 2px solid #e5e7eb;
+    cursor: pointer;
+    padding: 0.625rem 1.25rem;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  
+  .page-3 .back-btn:hover {
+    color: #111827;
+    border-color: #d1d5db;
+    background-color: #f9fafb;
+    transform: translateX(-4px);
+  }
+  
+  .page-3 .alerts-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .page-3 .card {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+    padding: 2.5rem;
+    margin-top: 1rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .page-3 .card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .page-3 .card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .page-3 .icon-box {
+    padding: 1rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    min-height: 60px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+  
+  .page-3 .icon-box i {
+    font-size: 2rem;
+    color: white;
+  }
+  
+  .page-3 .orange-gradient {
+    background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+  }
+  
+  .page-3 .card-title {
+    font-size: 2rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, #f97316 0%, #ef4444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+  }
+  
+  .page-3 .subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .page-3 .doctors-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  /* Success Message Styles */
+  .page-3 .success-message {
+    text-align: center;
+    padding: 3rem 0;
+  }
+  
+  .page-3 .success-icon-box {
+    width: 80px;
+    height: 80px;
+    background: #d1fae5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    animation: scaleIn 0.5s ease;
+  }
+  
+  @keyframes scaleIn {
+    from {
+      transform: scale(0);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+  
+  .page-3 .success-icon {
+    font-size: 2.5rem;
+    color: #059669;
+  }
+  
+  .page-3 .success-title {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #059669;
+    margin-bottom: 0.5rem;
+  }
+  
+  .page-3 .success-text {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .page-3 {
+      padding: 1.5rem;
+    }
+  
+    .page-3 .card {
+      padding: 2rem;
+    }
+  
+    .page-3 .card-title {
+      font-size: 1.75rem;
+    }
+  
+    .page-3 .icon-box {
+      min-width: 50px;
+      min-height: 50px;
+      padding: 0.75rem;
+    }
+  
+    .page-3 .icon-box i {
+      font-size: 1.5rem;
+    }
+  
+    .page-3 .success-title {
+      font-size: 1.5rem;
+    }
+  
+    .page-3 .success-icon-box {
+      width: 60px;
+      height: 60px;
+    }
+  
+    .page-3 .success-icon {
+      font-size: 2rem;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .page-3 {
+      padding: 1rem;
+    }
+  
+    .page-3 .card {
+      padding: 1.5rem;
+    }
+  
+    .page-3 .card-title {
+      font-size: 1.5rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .page-3 .card-header {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+  
+    .page-3 .icon-box {
+      align-self: flex-start;
+    }
+  }
