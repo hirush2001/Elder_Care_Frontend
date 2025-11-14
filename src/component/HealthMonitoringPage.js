@@ -14,7 +14,7 @@ function HealthMonitoringPage({ healthData, setHealthData, onBack, onSubmit }) {
               <i className="fas fa-heart"></i>
             </div>
             <div>
-              <h1 className="card-title teal">Health Monitoring</h1>
+              <h1 className="card-title teal">Health Monitoringg</h1>
               <p className="subtitle">Enter current health readings</p>
             </div>
           </div>
