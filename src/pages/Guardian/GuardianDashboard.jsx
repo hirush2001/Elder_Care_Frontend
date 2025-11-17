@@ -7,6 +7,7 @@ import { MdNotificationsActive } from "react-icons/md";
 import { FaUsers, FaUserCircle } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import ChatWidget from "../../components/chatwidget";
+import ElderProfileForm from "./ElderProfileList";
 import {
   LineChart,
   Line,
@@ -25,6 +26,7 @@ export default function GuardianDashboard() {
 
   const [activeTab, setActiveTab] = useState("health");
   const [reminders, setReminders] = useState([]);
+  const [showProfile, setShowProfile] = useState(false);
 
   // Health Record inputs
   const [bloodPressure, setBloodPressure] = useState("");
@@ -191,12 +193,13 @@ axios
           <p className="text-gray-500">{userEmail}</p>
         </div>
         <div className="flex gap-4">
-          <button
-            onClick={() => navigate("/profilelist")}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
-          >
-            <FaUserCircle className="w-7 h-7" />
-          </button>
+        <button
+        onClick={() => setShowProfile(true)}
+         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
+>
+         <FaUserCircle className="w-7 h-7" />
+        </button>
+
           <button
             onClick={handleLogout}
             className="bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
@@ -432,7 +435,21 @@ axios
       </p>
     )}
   </div>
+      )}
+      {showProfile && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-3xl shadow-xl p-6 w-[90%] max-w-4xl relative">
+      <button
+        onClick={() => setShowProfile(false)}
+        className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-xl font-bold cursor-pointer"
+      >
+        ✕
+      </button>
+      <ElderProfileForm />
+    </div>
+  </div>
 )}
+
 
 
       <ChatWidget />
