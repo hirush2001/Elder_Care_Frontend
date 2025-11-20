@@ -43,7 +43,8 @@ export default function GuardianDashboard() {
   const [healthRecords, setHealthRecords] = useState([]);
 
   // Caregiver requests
-  const [caregivers, setCaregivers] = useState([]); // fetched caregivers
+  const [elders, setElders] = useState([]); // fetched caregivers
+  const [role, setRole] = useState();
   const [selectedCaregiver, setSelectedCaregiver] = useState(""); // chosen caregiver
 
   // Fetch health records, reminders, caregivers
@@ -64,32 +65,36 @@ export default function GuardianDashboard() {
       .then((res) => setReminders(res.data.records || []))
       .catch((err) => console.error("Error fetching reminders:", err));
 
-    // Fetch caregivers
-    axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/caretaker/requests`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setCaregivers(res.data.caregivers || []))
-      .catch((err) => console.error("Error fetching caregivers:", err));
+
+    
     
     //Fetch caregivers
-    // Fetch caregivers from backend
-axios
-.get(`${import.meta.env.VITE_BACKEND_URL}/caretaker/all`, {
-  headers: { Authorization: `Bearer ${token}` },
-})
-.then((res) => {
-  if (Array.isArray(res.data)) {
-    setCaregivers(res.data);
-  } else {
-    console.warn("No caregivers found or unexpected response:", res.data);
-    setCaregivers([]);
-  }
-})
-.catch((err) => {
-  console.error("Error fetching caregivers:", err);
-  toast.error("Failed to load caregivers");
-});
+    
+    axios
+    .get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/elder`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then((res) => {
+     
+      const data = Array.isArray(res.data) ? res.data : res.data.eldrs;
+  
+      if (!data) {
+        console.warn("Unexpected response:", res.data);
+        setElders([]);
+        return;
+      }
+  
+      
+      const caregivers = data.filter((item) => item.role === "caregiver");
+  
+      setElders(caregivers);
+    })
+    .catch((err) => {
+      console.error("Error fetching caregivers:", err);
+      toast.error("Failed to load caregivers");
+      setElders([]);
+    });
+  
 
   }, [token]);
 
@@ -164,6 +169,7 @@ axios
   function handleAddRequest(care_taker_id) {
     if (!care_taker_id) return toast.error("Invalid caregiver ID");
   
+    
     axios
       .post(
         `${import.meta.env.VITE_BACKEND_URL}/caretaker/request/${care_taker_id}`, 
@@ -237,7 +243,7 @@ axios
         >
           <FaUsers className="text-purple-700 w-10 h-10" />
           <h2 className="text-lg font-semibold text-purple-700">Caregiver Requests</h2>
-          <p className="text-3xl font-bold mt-2">{caregivers.length}</p>
+          <p className="text-3xl font-bold mt-2">{elders.length}</p>
           <p className="text-gray-500 text-sm mt-1">Available</p>
         </div>
       </div>
@@ -405,35 +411,34 @@ axios
       Request a Caregiver
     </h2>
 
-    {caregivers.length > 0 ? (
-      <div className="space-y-4">
-        {caregivers.map((cg, index) => (
-          <div
-            key={index}
-            className="flex justify-between items-center bg-purple-50 border border-purple-200 rounded-2xl p-4 hover:bg-purple-100 transition"
-          >
-            <div>
-            <p className="text-gray-700">
-                {cg.fullname}
-              </p>
-              <p className="text-gray-700">{cg.email}</p>
-              <p className="text-gray-600">{cg.contactNumber}</p>
-            </div>
+    {elders.length > 0 ? (
+  <div className="space-y-4">
+    {elders.map((cg, index) => (
+      <div
+        key={index}
+        className="flex justify-between items-center bg-purple-50 border border-purple-200 rounded-2xl p-4 hover:bg-purple-100 transition"
+      >
+        <div>
+          <p className="text-gray-700">{cg.fullname}</p>
+          <p className="text-gray-700">{cg.email}</p>
+          <p className="text-gray-600">{cg.contactNumber}</p>
+        </div>
 
-            <button
-              onClick={() => handleAddRequest(cg.careId)}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-2xl shadow-md transition cursor-pointer"
-            >
-              Send Request
-            </button>
-          </div>
-        ))}
+        <button
+          onClick={() => handleAddRequest(cg.elderId)}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-2xl shadow-md transition cursor-pointer"
+        >
+          Send Request
+        </button>
       </div>
-    ) : (
-      <p className="text-center text-gray-500 mt-4">
-        No caregivers available right now.
-      </p>
-    )}
+    ))}
+  </div>
+) : (
+  <p className="text-center text-gray-500 mt-4">
+    No caregivers available right now.
+  </p>
+)}
+
   </div>
       )}
       {showProfile && (
