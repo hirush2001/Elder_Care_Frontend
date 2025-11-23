@@ -8,7 +8,7 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Elder"); // Default role can be Elder or Guardian
+  const [role, setRole] = useState("Elder");
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,7 +19,6 @@ export default function Login() {
         { email, password, role }
       );
 
-      // Extract token and user info
       const { token, user } = response.data;
 
       // Save in localStorage
@@ -30,8 +29,24 @@ export default function Login() {
 
       toast.success("Login successful!");
 
-      // Navigate to dashboard (change according to role)
-      navigate("/guardiandashboard");
+      console.log("ROLE FROM BACKEND =", user.role);
+
+      // Normalize role for navigation
+      const backendRole = user.role.toLowerCase();
+
+      if (backendRole === "elder") {
+        navigate("/guardiandashboard");
+      } 
+      else if (backendRole === "caregiver") {
+        navigate("/caregiverdashboard");
+      }
+      else if (backendRole === "admin") {
+        navigate("/admindashboard");
+      } 
+      else {
+        navigate("/");
+      }
+
     } catch (error) {
       console.error("Login error:", error);
       toast.error(
@@ -72,7 +87,7 @@ export default function Login() {
           className="border p-3 rounded-lg focus:outline-blue-400"
         >
           <option value="Elder">Elder</option>
-          <option value="Guardian">Guardian</option>
+          <option value="CareGiver">CareGiver</option>
         </select>
 
         <button

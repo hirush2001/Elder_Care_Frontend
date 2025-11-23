@@ -20,7 +20,7 @@ function App() {
       <Routes>
       
         
-
+        <Route path="/" element={<Login />} />
         <Route path="/guardiandashboard" element={<GuardianDashboard />} />
         <Route path="/healthRecord" element={<HealthRecordManage />} />
         <Route path="/medicationmanage" element={<MedicationManage />} />
