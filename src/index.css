@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /* ---------------------------- CSS Reset ---------------------------- */
 *,
 *::before,
@@ -143,3 +144,6 @@ input:focus, textarea:focus, select:focus {
 ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+=======
+@import "tailwindcss";
+>>>>>>> origin/main
