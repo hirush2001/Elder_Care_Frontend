@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaUserCircle, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import toast from "react-hot-toast";
-import { supabase } from "../../supabaseClient";
+import mediaUpload from "../../utils/mediaUpload";
 
 export default function ElderProfileForm({ regId }) {
   const [profile, setProfile] = useState(null);
@@ -10,6 +10,7 @@ export default function ElderProfileForm({ regId }) {
   const [formData, setFormData] = useState({});
   const [newProfileImage, setNewProfileImage] = useState(null);
 
+  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -39,11 +40,7 @@ export default function ElderProfileForm({ regId }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // sanitize file names to avoid 400 errors
-  const sanitizeFileName = (name) => {
-    return name.replace(/\s+/g, "_").replace(/[^\w.-]/g, "");
-  };
-
+  // Handle update + image upload
   const handleUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -54,35 +51,21 @@ export default function ElderProfileForm({ regId }) {
 
       let updatedProfile = { ...formData };
 
+      // Upload image using your utility
       if (newProfileImage) {
-        const fileName = sanitizeFileName(newProfileImage.name);
-        const filePath = `${profile.regId}_${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, newProfileImage, { cacheControl: "3600", upsert: true });
-
-        if (uploadError) {
-          toast.error("Failed to upload profile picture");
-          console.error(uploadError);
-          return; // stop updating profile if upload fails
-        }
-
-        const { data: publicData, error: publicError } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        if (publicError) {
-          toast.error("Failed to get profile picture URL");
-          console.error(publicError);
+        try {
+          const uploadedUrl = await mediaUpload(newProfileImage);
+          updatedProfile.profilePicture = uploadedUrl;
+        } catch (error) {
+          toast.error("Failed to upload profile image");
+          console.error(error);
           return;
         }
-
-        updatedProfile.profilePicture = publicData.publicUrl; // only update profilePicture
       }
 
-      // Update profile in backend
       const idToUpdate = profile.regId || regId;
+
+      // Update backend
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/profile/${idToUpdate}`,
         updatedProfile,
@@ -93,6 +76,7 @@ export default function ElderProfileForm({ regId }) {
       setFormData(updatedProfile);
       setEditMode(false);
       setNewProfileImage(null);
+
       toast.success("Profile updated successfully!");
     } catch (err) {
       console.error("Update error:", err);
@@ -115,6 +99,7 @@ export default function ElderProfileForm({ regId }) {
         ) : (
           <FaUserCircle className="w-28 h-28 text-gray-400" />
         )}
+
         <div>
           <h2 className="text-2xl font-semibold text-gray-800">{profile.fullName}</h2>
           <p className="text-gray-500">Age: {profile.age}</p>
@@ -158,6 +143,7 @@ export default function ElderProfileForm({ regId }) {
                 onChange={(e) => setNewProfileImage(e.target.files[0])}
                 className="w-full p-2 border rounded-lg"
               />
+
               {Object.entries(formData).map(([key, value]) => (
                 <input
                   key={key}

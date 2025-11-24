@@ -9,6 +9,8 @@ import ChatBot from "./components/chatbot";
 import Profile from "./pages/Guardian/Profile";
 import ElderProfileForm from "./pages/Guardian/ElderProfileList";
 import CaregiverDashboard from "./pages/CareGiver/CareGiverDashboard";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import Testpage from "./pages/Admin/test";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -28,6 +30,8 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/profilelist" element={<ElderProfileForm />} />
         <Route path="/caregiverdashboard" element={<CaregiverDashboard />} />
+        <Route path="/admindashboard" element={<AdminDashboard />} />
+        <Route path="/test" element={<Testpage />} />
         <Route path="/chatbot" element={<ChatBot />} />
         <Route path="/login" element={<Login />} />
 
