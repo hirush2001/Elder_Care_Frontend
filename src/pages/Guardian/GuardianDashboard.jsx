@@ -27,6 +27,7 @@ export default function GuardianDashboard() {
   const [activeTab, setActiveTab] = useState("health");
   const [reminders, setReminders] = useState([]);
   const [showProfile, setShowProfile] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
 
   // Health Record inputs
   const [bloodPressure, setBloodPressure] = useState("");
@@ -94,6 +95,16 @@ export default function GuardianDashboard() {
       toast.error("Failed to load caregivers");
       setElders([]);
     });
+
+    axios
+  .get(`${import.meta.env.VITE_BACKEND_URL}/profile/guardian/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  .then((res) => {
+    setProfileImage(res.data.profilePicture); // adapt to your field name
+  })
+  .catch((err) => console.error("Error loading profile:", err));
+
   
 
   }, [token]);
@@ -203,7 +214,16 @@ export default function GuardianDashboard() {
         onClick={() => setShowProfile(true)}
          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
 >
-         <FaUserCircle className="w-7 h-7" />
+{profileImage ? (
+  <img
+    src={profileImage}
+    alt="Profile"
+    className="w-10 h-10 rounded-full object-cover border border-gray-300"
+  />
+) : (
+  <FaUserCircle className="w-10 h-10 text-gray-600" />
+)}
+
         </button>
 
           <button
