@@ -119,24 +119,27 @@ export default function CareGiverDashboard() {
 
       {/* Stats */}
       <div className="flex flex-wrap gap-6 justify-center mb-6">
-        <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center">
-          <AiOutlineCheck className="text-yellow-500 w-10 h-10" />
-          <h2 className="text-lg font-semibold text-yellow-500">Pending</h2>
-          <p className="text-3xl font-bold mt-2">{pendingCount}</p>
-        </div>
+  
+  <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center">
+    <AiOutlineCheck className="text-yellow-500 w-10 h-10" />
+    <h2 className="text-lg font-semibold text-yellow-500">Pending</h2>
+    <p className="text-3xl font-bold mt-2">{pendingCount}</p>
+  </div>
 
-        <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center">
-          <AiOutlineCheck className="text-green-700 w-10 h-10" />
-          <h2 className="text-lg font-semibold text-green-700">Accepted</h2>
-          <p className="text-3xl font-bold mt-2">{acceptedCount}</p>
-        </div>
+  <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center">
+    <AiOutlineCheck className="text-green-700 w-10 h-10" />
+    <h2 className="text-lg font-semibold text-green-700">Accepted</h2>
+    <p className="text-3xl font-bold mt-2">{acceptedCount}</p>
+  </div>
 
-        <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center">
-          <AiOutlineClose className="text-red-500 w-10 h-10" />
-          <h2 className="text-lg font-semibold text-red-500">Rejected</h2>
-          <p className="text-3xl font-bold mt-2">{rejectedCount}</p>
-        </div>
-      </div>
+  <div className="bg-white shadow-lg rounded-2xl p-5 w-[280px] text-center flex flex-col items-center">
+    <AiOutlineClose className="text-red-500 w-10 h-10" />
+    <h2 className="text-lg font-semibold text-red-500">Rejected</h2>
+    <p className="text-3xl font-bold mt-2">{rejectedCount}</p>
+  </div>
+
+</div>
+
 
       {/* Tabs */}
       <div className="flex gap-3 mb-6 border-b pb-2">

@@ -1,42 +1,43 @@
 import React, { useState, useRef, useEffect } from "react";
 
-
 const ChatBot = () => {
-  const [healthId, setHealthId] = useState("");
+  const [elderId, setElderId] = useState("");  // Changed from healthId
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
   const sendMessage = async () => {
-    if (!healthId || !message) return alert("Enter health ID and message");
+    if (!elderId.trim() || !message.trim()) {
+      return alert("Please enter Elder ID and message");
+    }
 
-    setChatHistory([...chatHistory, { type: "user", text: message }]);
+    setChatHistory((prev) => [...prev, { type: "user", text: message }]);
     setMessage("");
+    setLoading(true);
 
     try {
       const response = await fetch("http://127.0.0.1:5000/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ health_id: healthId, message })
+        body: JSON.stringify({ elder_id: elderId, message }), // send elder_id
       });
 
       const data = await response.json();
-      if (data.reply) {
-        setChatHistory(prev => [...prev, { type: "bot", text: data.reply }]);
-      } else {
-        setChatHistory(prev => [...prev, { type: "bot", text: data.error }]);
-      }
+      const botReply = data.reply || data.error || "No response from server";
+      setChatHistory((prev) => [...prev, { type: "bot", text: botReply }]);
     } catch (err) {
       console.error(err);
-      setChatHistory(prev => [...prev, { type: "bot", text: "Error connecting to server" }]);
+      setChatHistory((prev) => [
+        ...prev,
+        { type: "bot", text: "Error connecting to server" },
+      ]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -46,9 +47,9 @@ const ChatBot = () => {
 
       <input
         type="text"
-        placeholder="Enter Health ID (e.g. H002)"
-        value={healthId}
-        onChange={(e) => setHealthId(e.target.value)}
+        placeholder="Enter Elder ID (e.g. E046)"
+        value={elderId}
+        onChange={(e) => setElderId(e.target.value)}
         className="w-full px-3 py-2 mb-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
 
@@ -71,6 +72,7 @@ const ChatBot = () => {
             </div>
           </div>
         ))}
+        {loading && <div className="text-gray-500 italic">Bot is typing...</div>}
         <div ref={chatEndRef} />
       </div>
 
@@ -80,12 +82,17 @@ const ChatBot = () => {
           placeholder="Type your message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button
           onClick={sendMessage}
-          className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
+          disabled={loading}
+          className={`px-4 py-2 font-semibold rounded-lg transition ${
+            loading
+              ? "bg-gray-400 cursor-not-allowed text-white"
+              : "bg-blue-500 text-white hover:bg-blue-600"
+          }`}
         >
           Send
         </button>
