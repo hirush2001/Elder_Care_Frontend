@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import "./App.css";
 import GuardianDashboard from "./pages/Guardian/GuardianDashboard";
-import Login from "./pages/Guardian/Login";
+//import Login from "./pages/Guardian/Login";
 import HealthRecordManage from "./pages/Guardian/HealthRecordManage";
 import MedicationManage from "./pages/Guardian/Reminder";
 import MyCareRequests from "./pages/Guardian/CareGiverRequest";
@@ -11,6 +11,8 @@ import ElderProfileForm from "./pages/Guardian/ElderProfileList";
 import CaregiverDashboard from "./pages/CareGiver/CareGiverDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Testpage from "./pages/Admin/test";
+import Login from "./pages/Credential/Login";
+import Signup from "./pages/Credential/Signup";
 import { Toaster } from "react-hot-toast";
 
 function App() {
@@ -31,9 +33,11 @@ function App() {
         <Route path="/profilelist" element={<ElderProfileForm />} />
         <Route path="/caregiverdashboard" element={<CaregiverDashboard />} />
         <Route path="/admindashboard" element={<AdminDashboard />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/test" element={<Testpage />} />
         <Route path="/chatbot" element={<ChatBot />} />
-        <Route path="/login" element={<Login />} />
+        
 
         {/* You can add more routes like dashboards here */}
       </Routes>
