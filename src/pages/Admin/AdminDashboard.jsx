@@ -8,6 +8,7 @@ import { FiLogOut, FiSearch, FiTrash2, FiCheck, FiX } from "react-icons/fi";
 import { HiOutlineUserCircle, HiOutlineLogout } from "react-icons/hi";
 import { MdAdminPanelSettings } from "react-icons/md";
 import { AiOutlineHeart } from "react-icons/ai";
+import AdminProfileForm from "./AdminProfile";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -17,6 +18,10 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showProfile, setShowProfile] = useState(false);
+  const [adminProfile, setAdminProfile] = useState(null);
+
+  
 
   useEffect(() => {
     if (token) fetchUsers();
@@ -30,6 +35,7 @@ export default function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(res.data || []);
+      setShowProfile(true);
     } catch (err) {
       toast.error("Failed to load users");
     } finally {
@@ -68,6 +74,26 @@ export default function AdminDashboard() {
   const caregiverCount = users.filter((u) => u.role === "caregiver").length;
   const adminCount = users.filter((u) => u.role === "admin").length;
 
+  const fetchAdminProfile = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}/profile/guardian/profile`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setAdminProfile(res.data);
+      setShowProfile(true);
+    } catch (err) {
+      if (err.response && err.response.status === 404) {
+        // No profile → go to create profile page
+        navigate("/cprofile");
+      } else {
+        console.error(err);
+        toast.error("Unable to load caregiver profile");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-100 via-white to-blue-100 p-8">
 
@@ -80,7 +106,7 @@ export default function AdminDashboard() {
 
         <div className="flex gap-4">
           <button
-            onClick={() => navigate("/profile")}
+            onClick={fetchAdminProfile}
             className="cursor-pointer"
           >
             <HiOutlineUserCircle className="w-10 h-10" />
@@ -149,7 +175,7 @@ export default function AdminDashboard() {
                   <th className="p-3">Name</th>
                   <th className="p-3">Email</th>
                   <th className="p-3">Role</th>
-                  <th className="p-3 text-right">Actions</th>
+                  <th className="p-3 ">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,6 +200,19 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+{showProfile && (
+              <div className="fixed inset-0 bg-black bg-opacity flex items-center justify-center z-50">
+                  <div className="bg-white rounded-3xl shadow-xl p-6 w-[90%] max-w-4xl relative">
+                      <button
+                          onClick={() => setShowProfile(false)}
+                          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-xl font-bold cursor-pointer"
+                      >
+                          ✕
+            </button>
+            <AdminProfileForm />
+                  </div>
+                  </div>
+          )}
     </div>
   );
 }
