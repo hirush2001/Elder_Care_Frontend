@@ -239,7 +239,7 @@ export default function Login() {
                 onClick={() => navigate("/signup")}
                 className="text-[15px] font-bold text-black hover:underline cursor-pointer"
               >
-                Create account
+                Create Account
               </button>
             </div>
             </div>
