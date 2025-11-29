@@ -225,7 +225,7 @@ export default function Login() {
                       <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="4" strokeDasharray="60" strokeLinecap="round" fill="none" />
                     </svg>
                   ) : null}
-                  <span>{loading ? 'Signing in...' : 'Sign in'}</span>
+                  <span>{loading ? 'Signing  in...' : 'Sign in'}</span>
                 </button>
               </div>
             </div>
