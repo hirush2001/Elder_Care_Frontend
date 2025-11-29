@@ -3,6 +3,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 
+// Use the provided image path. If your bundler doesn't accept this absolute path,
+// replace it with a public path like "/images/illustration.png" or import the file.
+const illustration = "/mnt/data/8158b188-00cf-4ef0-8462-a7ccc7c247bd.png";
+
 export default function Signup() {
   const navigate = useNavigate();
 
@@ -58,16 +62,15 @@ export default function Signup() {
         email: email.trim(),
         password,
         role: convertRole(role),
-        contactNumber: coNumber.trim(), 
+        contactNumber: coNumber.trim(),
       };
 
-      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`; 
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`;
 
-       await axios.post(url, payload);
+      await axios.post(url, payload);
 
       toast.success("Account created! Redirecting to login...");
       setTimeout(() => navigate("/login"), 1000);
-
     } catch (err) {
       console.error("Signup error:", err);
       toast.error(err?.response?.data?.error || "Signup failed");
@@ -77,85 +80,127 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-6">
-      <div className="w-[80%] max-w-4xl">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-10">
+    <div className="min-h-screen bg-[#F5F7FF] flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+        {/* Left illustration panel */}
+        <div className="hidden md:flex items-center justify-center bg-gradient-to-b from-purple-50 to-white p-10">
+          <div className="w-[85%]">
+            <img
+              src={illustration}
+              alt="illustration"
+              className="w-full h-auto select-none pointer-events-none"
+            />
+          </div>
+        </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold">Create an Account</h2>
-            <p className="text-lg text-gray-600 mt-2">Join Elder Care System and get started.</p>
+        {/* Right form panel */}
+        <div className="relative p-10 md:p-14">
+          {/* top-right small sign in */}
+          <div className="absolute right-6 top-6 text-sm text-gray-500">
+             
+            
           </div>
 
-          <form onSubmit={handleSignup} className="flex flex-col gap-6">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome to Focus!</h1>
+             <br></br><br/>
 
-            <input
-              type="text"
-              placeholder="Full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="border p-4 text-lg rounded-xl focus:outline-blue-500"
-              disabled={loading}
-            />
+            <form onSubmit={handleSignup} className="space-y-5">
+              {/* Name */}
+              <div>
+                <label className="block font-bold text-sm text-gray-600 mb-2">Name</label>
+                <input
+                  type="text"
+                  placeholder="Enter full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full border-2 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                  disabled={loading}
+                />
+              </div>
 
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border p-4 text-lg rounded-xl focus:outline-blue-500"
-              disabled={loading}
-            />
+              {/* Email */}
+              <div>
+                <label className="block font-bold text-sm text-gray-600 mb-2">Email</label>
+                <input
+                  type="email"
+                  placeholder="focus001@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border-2 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                  disabled={loading}
+                />
+              </div>
 
-            <input
-              type="password"
-              placeholder="Password (min 6 chars)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border p-4 text-lg rounded-xl focus:outline-blue-500"
-              disabled={loading}
-            />
+              {/* Password */}
+              <div>
+                <label className="block font-bold text-sm text-gray-600 mb-2">Password</label>
+                <input
+                  type="password"
+                  placeholder="8+ characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border-2 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                  disabled={loading}
+                />
+              </div>
 
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="border p-4 text-lg rounded-xl"
-              disabled={loading}
-            >
-              <option value="Elder">Elder</option>
-              <option value="Admin">Admin</option>
-              <option value="Caregiver">Caregiver</option>
-            </select>
+              {/* Role + Contact in grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-sm text-gray-600 mb-2">Role</label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full border-2 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                    disabled={loading}
+                  >
+                    <option value="Elder">Elder</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Caregiver">Caregiver</option>
+                  </select>
+                </div>
 
-            <input
-              type="tel"
-              placeholder="Contact number (e.g., +9477xxxxxxx)"
-              value={coNumber}
-              onChange={(e) => setCoNumber(e.target.value)}
-              className="border p-4 text-lg rounded-xl"
-              disabled={loading}
-            />
+                <div>
+                  <label className="block font-bold text-sm text-gray-600 mb-2">Contact</label>
+                  <input
+                    type="tel"
+                    placeholder="+9477xxxxxxx"
+                    value={coNumber}
+                    onChange={(e) => setCoNumber(e.target.value)}
+                    className="w-full border-2 rounded-xl px-4 py-3 text-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              className="bg-blue-600 text-white font-bold py-4 rounded-xl text-xl hover:bg-blue-700 transition disabled:opacity-60"
-              disabled={loading}
-            >
-              {loading ? "Creating account..." : "Sign up"}
-            </button>
+              {/* Submit */}
+              <div>
+                <button
+                  type="submit"
+                  className="w-full rounded-full py-3 text-xl font-bold bg-gradient-to-r from-purple-600 to-violet-500 text-white shadow-lg hover:scale-[1.01] transition transform disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Sign Up"}
+                </button>
+              </div>
 
-            <div className="text-center text-lg">
-              <span>Already have an account? </span>
+
+
+
+              <div className="text-center text-sm font-bold text-gray-500">
+                Already have an account?  {  
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="text-blue-600 underline"
-                disabled={loading}
+                className=" text-[15px] text-[#521cda] hover:underline cursor-pointer"
               >
-                Log in
+                  Login
               </button>
-            </div>
-          </form>
-
+            }
+                </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
