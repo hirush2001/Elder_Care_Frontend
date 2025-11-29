@@ -97,7 +97,7 @@ export default function ElderProfileForm({ regId }) {
             className="w-28 h-28 rounded-full object-cover border-2 border-purple-400"
           />
         ) : (
-          <FaUserCircle className="w-28 h-28 text-gray-400" />
+          <FaUserCircle className="w-28 h-28 text-red-400 cursor-pointer" />
         )}
 
         <div>
@@ -122,7 +122,7 @@ export default function ElderProfileForm({ regId }) {
           onClick={() => setEditMode(true)}
           className="flex items-center px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition"
         >
-          <FaEdit className="mr-2" /> Update Profile
+          <FaEdit className="mr-2 " /> Update Profile
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export default function ElderProfileForm({ regId }) {
             <h2 className="text-xl font-semibold mb-4 flex items-center justify-between">
               Edit Profile
               <button onClick={() => setEditMode(false)}>
-                <FaTimes className="text-gray-600 hover:text-gray-800" />
+                <FaTimes className="text-red-600 cursor-pointer" />
               </button>
             </h2>
 
@@ -160,13 +160,13 @@ export default function ElderProfileForm({ regId }) {
             <div className="mt-4 flex justify-end space-x-3">
               <button
                 onClick={handleUpdate}
-                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl"
+                className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl cursor-pointer"
               >
                 <FaSave className="mr-2" /> Save
               </button>
               <button
                 onClick={() => setEditMode(false)}
-                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-xl"
+                className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-xl cursor-pointer"
               >
                 Cancel
               </button>

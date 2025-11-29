@@ -5,6 +5,7 @@ import axios from "axios";
 
 import { FaUsers, FaUserCircle, FaUserTie } from "react-icons/fa";
 import { FiLogOut, FiSearch, FiTrash2, FiCheck, FiX } from "react-icons/fi";
+import { HiOutlineUserCircle, HiOutlineLogout } from "react-icons/hi";
 import { MdAdminPanelSettings } from "react-icons/md";
 import { AiOutlineHeart } from "react-icons/ai";
 
@@ -80,16 +81,16 @@ export default function AdminDashboard() {
         <div className="flex gap-4">
           <button
             onClick={() => navigate("/profile")}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-5 py-2 rounded-3xl shadow-md transition"
+            className="cursor-pointer"
           >
-            <FaUserCircle className="w-6 h-6" />
+            <HiOutlineUserCircle className="w-10 h-10" />
           </button>
 
           <button
             onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-3xl shadow-md transition"
+            className="cursor-pointer"
           >
-            <FiLogOut className="w-6 h-6" />
+            <HiOutlineLogout className="w-10 h-10" />
           </button>
         </div>
       </header>

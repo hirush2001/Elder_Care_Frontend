@@ -5,6 +5,7 @@ import axios from "axios";
 
 import { FaUsers, FaUserCircle } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
+import { HiOutlineUserCircle, HiOutlineLogout } from "react-icons/hi";
 import { AiOutlineCheck, AiOutlineClose } from "react-icons/ai";
 
 import ChatWidget from "../../components/chatwidget";
@@ -103,16 +104,16 @@ export default function CareGiverDashboard() {
         <div className="flex gap-4">
           <button
             onClick={() => setShowProfile(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
+            className="cursor-pointer"
           >
-            <FaUserCircle className="w-7 h-7" />
+            <HiOutlineUserCircle className="w-10 h-10" />
           </button>
 
           <button
             onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
+            className="cursor-pointer"
           >
-            <FiLogOut className="w-7 h-7" />
+             <HiOutlineLogout className="w-10 h-10" />
           </button>
         </div>
       </header>
