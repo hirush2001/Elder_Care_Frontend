@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Aprofile = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Aprofile = () => {
   });
 
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
   
 
   const handleChange = (e) => {
@@ -45,7 +47,8 @@ const Aprofile = () => {
         email: "",
         phone: "",
         address: "",
-      });
+      })
+        navigate("/admindashboard");
     } catch (error) {
       console.error(error);
       setMessage("Failed to add profile. Please try again.");

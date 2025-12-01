@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const ElderProfileForm = () => {
+const Profile = () => {
   const [formData, setFormData] = useState({
     fullName: "",
     age: "",
@@ -16,6 +17,7 @@ const ElderProfileForm = () => {
   });
 
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -29,8 +31,8 @@ const ElderProfileForm = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token"); // Assuming JWT is stored in localStorage
-      const response = await axios.post(
-        "http://localhost:8080/profile/elderprofile",
+     const response = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/profile/elderprofile`,
         formData,
         {
           headers: {
@@ -51,7 +53,9 @@ const ElderProfileForm = () => {
         guardianRelationship: "",
         guardianEmail: "",
         guardianPhone: "",
+
       });
+      navigate("/guardiandashboard");
     } catch (error) {
       console.error(error);
       setMessage("Failed to add profile. Please try again.");
@@ -191,4 +195,4 @@ const ElderProfileForm = () => {
   );
 };
 
-export default ElderProfileForm;
+export default Profile;

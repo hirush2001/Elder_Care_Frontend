@@ -35,7 +35,7 @@ export default function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setUsers(res.data || []);
-      setShowProfile(true);
+      
     } catch (err) {
       toast.error("Failed to load users");
     } finally {

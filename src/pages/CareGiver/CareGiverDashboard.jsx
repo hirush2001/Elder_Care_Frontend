@@ -30,6 +30,7 @@ export default function CareGiverDashboard() {
         `${import.meta.env.VITE_BACKEND_URL}/caretaker/my-requests`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log("Fetched requests:", res.data);
       setRequests(res.data);
     } catch (err) {
       console.error(err);
@@ -216,14 +217,14 @@ export default function CareGiverDashboard() {
                   <>
                     <button
                       onClick={() => handleAcceptRequest(req.requestId)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-2xl shadow-md transition"
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-2xl shadow-md transition cursor-pointer"
                     >
                       Accept
                     </button>
 
                     <button
                       onClick={() => handleRejectRequest(req.requestId)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-2xl shadow-md transition"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-2xl shadow-md transition cursor-pointer"
                     >
                       Reject
                     </button>

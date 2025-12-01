@@ -13,11 +13,12 @@ export default function MyCareRequests() {
     if (!token) return;
 
     axios
-      .get(`${import.meta.env.VITE_BACKEND_URL}/caretaker/requests`, {
+      .get(`${import.meta.env.VITE_BACKEND_URL}/caretaker/request/records`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        const data = Array.isArray(res.data) ? res.data : [];
+        const data = res.data.records || [];
+
 
         // ✅ Count statuses (your API uses "Pending" and maybe "C" for completed/accepted)
         const pendingCount = data.filter(

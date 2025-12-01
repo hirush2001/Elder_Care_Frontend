@@ -3,13 +3,14 @@ import axios from "axios";
 import { FaUserCircle, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import toast from "react-hot-toast";
 import mediaUpload from "../../utils/mediaUpload";
+import { useNavigate } from "react-router-dom";
 
 export default function ElderProfileForm({ regId }) {
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [newProfileImage, setNewProfileImage] = useState(null);
-
+  const navigate = useNavigate();
   // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
@@ -21,16 +22,26 @@ export default function ElderProfileForm({ regId }) {
         }
 
         const res = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/profile/guardian`,
+          `${import.meta.env.VITE_BACKEND_URL}/profile/guardian/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        setProfile(res.data);
-        setFormData(res.data);
+
+        if (res.data) {
+          setProfile(res.data);
+          setFormData(res.data);
+        } else {
+          navigate("/profile"); // Navigate to create profile page
+        }
       } catch (err) {
-        console.error("Error fetching profile:", err);
-        toast.error("Failed to load profile");
+        if (err.response && err.response.status === 404) {
+          navigate("/profile"); // No profile found
+        } else {
+          console.error("Error fetching Elder profile:", err);
+          toast.error("Failed to load Elder profile");
+        }
       }
+     
     };
 
     fetchProfile();
