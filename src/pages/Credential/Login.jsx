@@ -242,7 +242,7 @@ export default function Login() {
                 Create Account
               </button>
             </div>
-            </div>
+            </div><div/>
       </div>
     </div>
   );
