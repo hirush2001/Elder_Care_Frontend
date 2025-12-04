@@ -102,7 +102,7 @@ export default function Signup() {
           </div>
 
           <div className="max-w-md mx-auto">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Welcome to Focus!</h1>
+            <h1 className="text-3xl font-extrabold text-gray-900 mb-2 text-center">Signup</h1>
              <br></br><br/>
 
             <form onSubmit={handleSignup} className="space-y-5">
