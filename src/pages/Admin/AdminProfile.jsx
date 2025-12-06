@@ -5,13 +5,15 @@ import toast from "react-hot-toast";
 import mediaUpload from "../../utils/mediaUpload";
 import { useNavigate } from "react-router-dom";
 
-export default function ElderProfileForm({ regId }) {
+export default function AdminProfileForm({ regId }) {
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({});
   const [newProfileImage, setNewProfileImage] = useState(null);
+
   const navigate = useNavigate();
-  // Fetch profile data
+
+  // Fetch caregiver profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -26,22 +28,20 @@ export default function ElderProfileForm({ regId }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-
         if (res.data) {
           setProfile(res.data);
           setFormData(res.data);
         } else {
-          navigate("/profile"); // Navigate to create profile page
+          navigate("/aprofile"); // Navigate to create profile page
         }
       } catch (err) {
         if (err.response && err.response.status === 404) {
-          navigate("/profile"); // No profile found
+          navigate("/aprofile"); // No profile found
         } else {
-          console.error("Error fetching Elder profile:", err);
-          toast.error("Failed to load Elder profile");
+          console.error("Error fetching caregiver profile:", err);
+          toast.error("Failed to load caregiver profile");
         }
       }
-     
     };
 
     fetchProfile();
@@ -51,7 +51,7 @@ export default function ElderProfileForm({ regId }) {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle update + image upload
+  // Handle profile update + image upload
   const handleUpdate = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -62,21 +62,19 @@ export default function ElderProfileForm({ regId }) {
 
       let updatedProfile = { ...formData };
 
-      // Upload image using your utility
+      // Upload profile image if selected
       if (newProfileImage) {
         try {
           const uploadedUrl = await mediaUpload(newProfileImage);
           updatedProfile.profilePicture = uploadedUrl;
         } catch (error) {
           toast.error("Failed to upload profile image");
-          console.error(error);
           return;
         }
       }
 
       const idToUpdate = profile.regId || regId;
 
-      // Update backend
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/profile/${idToUpdate}`,
         updatedProfile,
@@ -88,10 +86,10 @@ export default function ElderProfileForm({ regId }) {
       setEditMode(false);
       setNewProfileImage(null);
 
-      toast.success("Profile updated successfully!");
+      toast.success("Caregiver profile updated successfully!");
     } catch (err) {
       console.error("Update error:", err);
-      toast.error("Failed to update profile");
+      toast.error("Failed to update caregiver profile");
     }
   };
 
@@ -100,15 +98,16 @@ export default function ElderProfileForm({ regId }) {
 
   return (
     <div className="bg-white shadow-lg rounded-3xl p-8 w-[90%] max-w-4xl mx-auto mt-6">
+      {/* Top Section */}
       <div className="flex items-center space-x-6">
         {profile.profilePicture ? (
           <img
             src={profile.profilePicture}
             alt="Profile"
-            className="w-28 h-28 rounded-full object-cover border-2 border-purple-400"
+            className="w-28 h-28 rounded-full object-cover border-2 border-blue-400"
           />
         ) : (
-          <FaUserCircle className="w-28 h-28 text-red-400 cursor-pointer" />
+          <FaUserCircle className="w-28 h-28 text-gray-400" />
         )}
 
         <div>
@@ -119,29 +118,33 @@ export default function ElderProfileForm({ regId }) {
         </div>
       </div>
 
+      {/* Details Section */}
       <div className="mt-6 space-y-2">
-        <p className="text-gray-700"><span className="font-semibold">Phone:</span> {profile.phone}</p>
-        <p className="text-gray-700"><span className="font-semibold">Address:</span> {profile.address}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Name:</span> {profile.guardianFullName}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Relationship:</span> {profile.guardianRelationship}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Phone:</span> {profile.guardianPhone}</p>
-        <p className="text-gray-700"><span className="font-semibold">Guardian Email:</span> {profile.guardianEmail}</p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Phone:</span> {profile.phone}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold">Address:</span> {profile.address}
+        </p>
+      
       </div>
 
-      <div className="mt-6 flex justify-end">
+      {/* EDIT BUTTON */}
+      <div className="mt-6 flex justify-end ">
         <button
           onClick={() => setEditMode(true)}
-          className="flex items-center px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold transition"
+          className="flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition cursor-pointer"
         >
-          <FaEdit className="mr-2 cursor-pointer" /> Update Profile
+          <FaEdit className="mr-2 " /> Update Profile
         </button>
       </div>
 
+      {/* EDIT POPUP */}
       {editMode && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl w-full max-w-lg relative">
             <h2 className="text-xl font-semibold mb-4 flex items-center justify-between">
-              Edit Profile
+              Edit Admin Profile
               <button onClick={() => setEditMode(false)}>
                 <FaTimes className="text-red-600 cursor-pointer" />
               </button>
@@ -158,7 +161,7 @@ export default function ElderProfileForm({ regId }) {
               {Object.entries(formData).map(([key, value]) => (
                 <input
                   key={key}
-                  type={key.toLowerCase().includes("email") ? "email" : "text"}
+                  type="text"
                   name={key}
                   value={value || ""}
                   onChange={handleChange}
@@ -175,6 +178,7 @@ export default function ElderProfileForm({ regId }) {
               >
                 <FaSave className="mr-2" /> Save
               </button>
+
               <button
                 onClick={() => setEditMode(false)}
                 className="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-xl cursor-pointer"
@@ -184,7 +188,8 @@ export default function ElderProfileForm({ regId }) {
             </div>
           </div>
         </div>
-      )}
+          )}
+
     </div>
   );
 }

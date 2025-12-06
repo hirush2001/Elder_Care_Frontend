@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { AiOutlineHeart } from "react-icons/ai";
 import { MdNotificationsActive } from "react-icons/md";
-import { FaUsers, FaUserCircle } from "react-icons/fa";
-import { FiLogOut } from "react-icons/fi";
+import { FaUsers } from "react-icons/fa";
 import ChatWidget from "../../components/chatwidget";
 import ElderProfileForm from "./ElderProfileList";
+import { HiOutlineUserCircle, HiOutlineLogout } from "react-icons/hi";
 import {
   LineChart,
   Line,
@@ -209,10 +209,10 @@ export default function GuardianDashboard() {
           <h1 className="text-3xl font-extrabold text-blue-700">Guardian Dashboard</h1>
           <p className="text-gray-500">{userEmail}</p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-8">
         <button
         onClick={() => setShowProfile(true)}
-         className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
+         className=" cursor-pointer"
 >
 {profileImage ? (
   <img
@@ -221,16 +221,16 @@ export default function GuardianDashboard() {
     className="w-10 h-10 rounded-full object-cover border border-gray-300"
   />
 ) : (
-  <FaUserCircle className="w-10 h-10 text-gray-600" />
+  <HiOutlineUserCircle className="w-10 h-10" />
 )}
 
         </button>
 
           <button
             onClick={handleLogout}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-3xl shadow-md transition cursor-pointer"
+            className="cursor-pointer"
           >
-            <FiLogOut className="w-7 h-7" />
+            <HiOutlineLogout className="w-10 h-10" />
           </button>
         </div>
       </header>
