@@ -5,7 +5,7 @@ import GuardianDashboard from "./pages/Guardian/GuardianDashboard";
 import HealthRecordManage from "./pages/Guardian/HealthRecordManage";
 import MedicationManage from "./pages/Guardian/Reminder";
 import MyCareRequests from "./pages/Guardian/CareGiverRequest";
-import ChatBot from "./components/chatbot";
+import ChatBot from "./components/Chatbot";
 import Profile from "./pages/Guardian/Profile";
 import ElderProfileForm from "./pages/Guardian/ElderProfileList";
 import CaregiverProfileForm from "./pages/CareGiver/CareGiverProfile";
