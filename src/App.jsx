@@ -14,7 +14,7 @@ import CaregiverDashboard from "./pages/CareGiver/CareGiverDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Testpage from "./pages/Admin/test";
 import Login from "./pages/Credential/Login";
-import Signup from "./pages/Credential/Signup";
+import Signup from "./pages/Credential/SignUp";
 import Cprofile from "./pages/CareGiver/Cprofile";
 import Aprofile from "./pages/Admin/Aprofile";
 
