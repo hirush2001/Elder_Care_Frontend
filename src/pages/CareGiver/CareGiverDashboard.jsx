@@ -18,6 +18,7 @@ export default function CareGiverDashboard() {
   const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("Pending");
   const [caregiverProfile, setCaregiverProfile] = useState(null);
+   const [profileImage, setProfileImage] = useState(null);
 
   // ----------------------------
   // FETCH REQUESTS
@@ -103,10 +104,13 @@ export default function CareGiverDashboard() {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/profile/guardian/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ).then((res) => { 
+        setProfileImage(res.data.profilePicture);
+        setCaregiverProfile(res.data);
+        setShowProfile(true);
+      })
 
-      setCaregiverProfile(res.data);
-      setShowProfile(true);
+     
     } catch (err) {
       if (err.response && err.response.status === 404) {
         // No profile → go to create profile page
@@ -137,12 +141,20 @@ export default function CareGiverDashboard() {
           <p className="text-gray-500">{userEmail}</p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-8">
           <button
             onClick={fetchCaregiverProfile}
             className="cursor-pointer"
           >
-            <HiOutlineUserCircle className="w-10 h-10" />
+            {profileImage ? (
+  <img
+    src={profileImage}
+    alt="Profile"
+    className="w-10 h-10 rounded-full object-cover border border-gray-300"
+  />
+) : (
+  <HiOutlineUserCircle className="w-10 h-10" />
+)}
           </button>
 
           <button
