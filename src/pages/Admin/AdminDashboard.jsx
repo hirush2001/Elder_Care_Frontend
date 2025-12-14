@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showProfile, setShowProfile] = useState(false);
   const [adminProfile, setAdminProfile] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
 
   
 
@@ -79,17 +80,20 @@ export default function AdminDashboard() {
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}/profile/guardian/profile`,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ).then((res) => { 
+        setProfileImage(res.data.profilePicture);
+        setAdminProfile(res.data);
+        setShowProfile(true);
+      })
 
-      setAdminProfile(res.data);
-      setShowProfile(true);
+     
     } catch (err) {
       if (err.response && err.response.status === 404) {
         // No profile → go to create profile page
         navigate("/cprofile");
       } else {
         console.error(err);
-        toast.error("Unable to load caregiver profile");
+        toast.error("Unable to load Admin profile");
       }
     }
   };
@@ -104,12 +108,20 @@ export default function AdminDashboard() {
           <p className="text-gray-500">{userEmail}</p>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-8">
           <button
             onClick={fetchAdminProfile}
             className="cursor-pointer"
           >
-            <HiOutlineUserCircle className="w-10 h-10" />
+            {profileImage ? (
+  <img
+    src={profileImage}
+    alt="Profile"
+    className="w-10 h-10 rounded-full object-cover border border-gray-300"
+  />
+) : (
+  <HiOutlineUserCircle className="w-10 h-10" />
+)}
           </button>
 
           <button
