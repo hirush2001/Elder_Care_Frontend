@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import illustration from "../../assets/Logo.png";
 
 
-export default function Signup() {
+export default function SignUp() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
