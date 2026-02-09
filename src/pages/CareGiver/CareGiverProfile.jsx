@@ -126,7 +126,7 @@ export default function CaregiverProfileForm({ regId }) {
         <p className="text-gray-700">
           <span className="font-semibold">Address:</span> {profile.address}
         </p>
-      
+
       </div>
 
       {/* EDIT BUTTON */}
@@ -188,7 +188,7 @@ export default function CaregiverProfileForm({ regId }) {
             </div>
           </div>
         </div>
-          )}
+      )}
 
     </div>
   );
