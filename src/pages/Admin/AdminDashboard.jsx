@@ -54,15 +54,26 @@ export default function AdminDashboard() {
 
   const handleDelete = async (elderId) => {
     if (!elderId) return toast.error("Invalid elderId");
+
+    // Store user data for potential rollback
+    const userToDelete = users.find(u => u.elderId === elderId);
+    if (!userToDelete) return toast.error("User not found");
+
+    // Remove from UI immediately
+    setUsers(prev => prev.filter(u => u.elderId !== elderId));
+    toast.success(`Successfully deleted user`);
+
     try {
+      // Delete on server in background
       await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/auth/elder/${elderId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Successfully deleted user`);
-      fetchUsers();
     } catch (err) {
-      toast.error(`Failed to delete user`);
+      console.error(err);
+      toast.error(`Failed to delete user. Restoring...`);
+      // Restore user on error
+      setUsers(prev => [...prev, userToDelete]);
     }
   };
 

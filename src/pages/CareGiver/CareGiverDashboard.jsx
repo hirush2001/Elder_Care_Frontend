@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineUserCircle, HiOutlineLogout, HiOutlineMenu, HiOutlineX } from "react-icons/hi";
-import { AiOutlineCheck, AiOutlineClose, AiOutlineClockCircle } from "react-icons/ai";
+import { AiOutlineCheck, AiOutlineClose, AiOutlineClockCircle, AiOutlineDelete } from "react-icons/ai";
 import { FaUsers, FaUserCheck, FaUserTimes } from "react-icons/fa";
 import ChatWidget from "../../components/chatwidget";
 import CaregiverProfileForm from "./CareGiverProfile";
@@ -61,19 +61,28 @@ export default function CareGiverDashboard() {
   const handleAcceptRequest = async (requestId) => {
     if (!requestId) return toast.error("Invalid request ID");
 
+    // Update UI immediately (optimistic update)
+    setRequests(prev => prev.map(req =>
+      req.requestId === requestId ? { ...req, status: "Accepted" } : req
+    ));
+    setRequestFilter("Accepted");
+    toast.success("Request accepted");
+
     try {
+      // Save to server in background
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/caretaker/elder/accept/${requestId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      toast.success("Request accepted");
-      setRequestFilter("Accepted"); // Switch to Accepted tab
-      fetchRequests();
     } catch (err) {
       console.error(err);
       toast.error("Failed to accept request");
+      // Revert UI change if server fails
+      setRequests(prev => prev.map(req =>
+        req.requestId === requestId ? { ...req, status: "Pending" } : req
+      ));
+      setRequestFilter("Pending");
     }
   };
 
@@ -81,19 +90,55 @@ export default function CareGiverDashboard() {
   const handleRejectRequest = async (requestId) => {
     if (!requestId) return toast.error("Invalid request ID");
 
+    // Update UI immediately (optimistic update)
+    setRequests(prev => prev.map(req =>
+      req.requestId === requestId ? { ...req, status: "Rejected" } : req
+    ));
+    setRequestFilter("Rejected");
+    toast.error("Request rejected");
+
     try {
+      // Save to server in background
       await axios.put(
         `${import.meta.env.VITE_BACKEND_URL}/caretaker/elder/reject/${requestId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      toast.error("Request rejected");
-      setRequestFilter("Rejected"); // Switch to Rejected tab
-      fetchRequests();
     } catch (err) {
       console.error(err);
       toast.error("Failed to reject request");
+      // Revert UI change if server fails
+      setRequests(prev => prev.map(req =>
+        req.requestId === requestId ? { ...req, status: "Pending" } : req
+      ));
+      setRequestFilter("Pending");
+    }
+  };
+
+  // Delete Request
+  const handleDeleteRequest = async (requestId) => {
+    if (!requestId) return toast.error("Invalid request ID");
+
+    // Confirm before deleting
+    //if (!window.confirm("Are you sure you want to delete this request?")) return;
+
+    try {
+      // Delete from server
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}/caretaker/request/${requestId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update UI after successful deletion
+      setRequests(prev => prev.filter(req => req.requestId !== requestId));
+      toast.success("Request deleted successfully");
+    } catch (err) {
+      console.error(err);
+      if (err.response?.status === 404) {
+        toast.error("Request not found");
+      } else {
+        toast.error("Failed to delete request");
+      }
     }
   };
 
@@ -448,12 +493,21 @@ export default function CareGiverDashboard() {
                                 </button>
                               </>
                             ) : (
-                              <span
-                                className={`px-4 py-2 rounded-xl text-white font-medium ${req.status === "Accepted" ? "bg-green-500" : "bg-red-500"
-                                  }`}
-                              >
-                                {req.status}
-                              </span>
+                              <>
+                                <span
+                                  className={`px-4 py-2 rounded-xl text-white font-medium ${req.status === "Accepted" ? "bg-green-500" : "bg-red-500"
+                                    }`}
+                                >
+                                  {req.status}
+                                </span>
+                                <button
+                                  onClick={() => handleDeleteRequest(req.requestId)}
+                                  className="bg-gray-700 hover:bg-gray-800 text-white p-2 rounded-xl shadow-lg hover:shadow-gray-400 transition-all active:scale-95"
+                                  title="Delete request"
+                                >
+                                  <AiOutlineDelete className="w-5 h-5" />
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>

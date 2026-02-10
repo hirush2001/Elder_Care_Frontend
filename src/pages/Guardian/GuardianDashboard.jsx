@@ -113,25 +113,37 @@ export default function GuardianDashboard() {
       temperature,
     };
 
+    // Create temporary record for instant display
+    const tempRecord = {
+      ...recordData,
+      createdAt: new Date().toISOString(),
+      healthId: `temp-${Date.now()}`
+    };
+
+    // Update UI immediately
+    setHealthRecords((prev) => [...prev, tempRecord]);
+    setBloodPressure("");
+    setSugarLevel("");
+    setPulseRate("");
+    setTemperature("");
+    toast.success("Health record added successfully");
+
+    // Save to server in background
     axios
       .post(`${import.meta.env.VITE_BACKEND_URL}/health/record`, recordData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
-        toast.success(res.data.message || "Health record added successfully");
-        setHealthRecords((prev) => [...prev, res.data.record]);
-        setBloodPressure("");
-        setSugarLevel("");
-        setPulseRate("");
-        setTemperature("");
+        // Replace temp record with real data
+        setHealthRecords((prev) =>
+          prev.map(r => r.healthId === tempRecord.healthId ? res.data.record : r)
+        );
       })
       .catch((err) => {
         console.error("Error adding health record:", err);
-        toast.error(
-          err.response?.data?.message || "Failed to add health record"
-        );
+        toast.error(err.response?.data?.message || "Failed to add health record");
+        // Remove temp record on error
+        setHealthRecords((prev) => prev.filter(r => r.healthId !== tempRecord.healthId));
       });
   }
 
@@ -144,22 +156,32 @@ export default function GuardianDashboard() {
       time,
     };
 
+    // Update UI immediately
+    const tempReminder = { ...reminderData, medicalReminderId: `temp-${Date.now()}` };
+    setReminders((prev) => [...prev, tempReminder]);
+    setMedicineName("");
+    setDosage("");
+    setTime("");
+    toast.success("Reminder added successfully");
+
+    // Save to server in background
     axios
       .post(`${import.meta.env.VITE_BACKEND_URL}/medical/addmedicine`, reminderData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .then(() => {
-        toast.success("Reminder added successfully");
-        setReminders((prev) => [...prev, reminderData]);
-        setMedicineName("");
-        setDosage("");
-        setTime("");
+      .then((res) => {
+        // Replace temp with real data if available
+        if (res.data.reminder) {
+          setReminders((prev) =>
+            prev.map(r => r.medicalReminderId === tempReminder.medicalReminderId ? res.data.reminder : r)
+          );
+        }
       })
       .catch((err) => {
         console.error("Error adding reminder:", err);
         toast.error(err.response?.data?.message || "Failed to add reminder");
+        // Remove temp reminder on error
+        setReminders((prev) => prev.filter(r => r.medicalReminderId !== tempReminder.medicalReminderId));
       });
   }
 
