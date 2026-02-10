@@ -14,7 +14,7 @@ import CaregiverDashboard from "./pages/CareGiver/CareGiverDashboard";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Testpage from "./pages/Admin/test";
 import Login from "./pages/Credential/Login";
-import Signup from "./pages/Credential/SignUp";
+import SignUp from "./pages/Credential/SignUp";
 import Cprofile from "./pages/CareGiver/Cprofile";
 import Aprofile from "./pages/Admin/Aprofile";
 
@@ -28,8 +28,8 @@ function App() {
       <Toaster position="top-right" reverseOrder={false} />
 
       <Routes>
-      
-        
+
+
         <Route path="/" element={<Login />} />
         <Route path="/guardiandashboard" element={<GuardianDashboard />} />
         <Route path="/healthRecord" element={<HealthRecordManage />} />
@@ -43,11 +43,11 @@ function App() {
         <Route path="/aprofilelist" element={<AdminProfileForm />} />
         <Route path="/caregiverdashboard" element={<CaregiverDashboard />} />
         <Route path="/admindashboard" element={<AdminDashboard />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/test" element={<Testpage />} />
         <Route path="/chatbot" element={<ChatBot />} />
-        
+
 
         {/* You can add more routes like dashboards here */}
       </Routes>

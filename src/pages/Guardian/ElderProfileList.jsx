@@ -41,7 +41,7 @@ export default function ElderProfileForm({ regId }) {
           toast.error("Failed to load Elder profile");
         }
       }
-     
+
     };
 
     fetchProfile();
