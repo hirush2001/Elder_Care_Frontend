@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { AiOutlineHeart } from "react-icons/ai";
+import { AiOutlineHeart, AiFillStar, AiOutlineStar } from "react-icons/ai";
 import { MdNotificationsActive } from "react-icons/md";
 import { FaUsers } from "react-icons/fa";
 import { HiOutlineUserCircle, HiOutlineLogout, HiOutlineMenu, HiOutlineX } from "react-icons/hi";
@@ -46,6 +46,14 @@ export default function GuardianDashboard() {
   const [medicineName, setMedicineName] = useState("");
   const [dosage, setDosage] = useState("");
   const [time, setTime] = useState("");
+
+  // Review related state
+  const [reviews, setReviews] = useState({});
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedCaregiver, setSelectedCaregiver] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [editingReview, setEditingReview] = useState(null);
 
   // Fetch health records, reminders, caregivers
   useEffect(() => {
@@ -93,7 +101,29 @@ export default function GuardianDashboard() {
         setProfileImage(res.data.profilePicture);
       })
       .catch((err) => console.error("Error loading profile:", err));
+      
+    // Fetch reviews for each caregiver
+    fetchReviewsData();
   }, [token]);
+
+  // Fetch reviews data
+  const fetchReviewsData = async () => {
+    if (!token) return;
+    
+    try {
+      const elderReviews = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/elder/${localStorage.getItem("userEmail")}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      const reviewsMap = {};
+      elderReviews.data.forEach(review => {
+        reviewsMap[review.caregiverId] = review;
+      });
+      setReviews(reviewsMap);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    }
+  };
 
   function handleLogout() {
     localStorage.removeItem("userRole");
@@ -207,6 +237,177 @@ export default function GuardianDashboard() {
       });
   }
 
+  // Calculate health score based on latest vital signs
+  function calculateHealthScore() {
+    if (healthRecords.length === 0) return 0;
+    
+    const latestRecord = healthRecords[healthRecords.length - 1];
+    let score = 0;
+    let totalChecks = 0;
+
+    // Blood Pressure check (normal: systolic < 130)
+    if (latestRecord.bloodPressure) {
+      totalChecks++;
+      const bp = parseInt(latestRecord.bloodPressure);
+      if (bp >= 90 && bp < 130) score += 25; // Excellent
+      else if (bp < 140) score += 20; // Good
+      else if (bp < 160) score += 15; // Fair
+      else score += 5; // Needs attention
+    }
+
+    // Sugar Level check (normal: 70-100 mg/dL)
+    if (latestRecord.sugarLevel) {
+      totalChecks++;
+      const sugar = parseInt(latestRecord.sugarLevel);
+      if (sugar >= 70 && sugar <= 100) score += 25; // Excellent
+      else if (sugar <= 125) score += 20; // Good
+      else if (sugar <= 180) score += 15; // Fair
+      else score += 5; // Needs attention
+    }
+
+    // Pulse Rate check (normal: 60-100 bpm)
+    if (latestRecord.pulseRate) {
+      totalChecks++;
+      const pulse = parseInt(latestRecord.pulseRate);
+      if (pulse >= 60 && pulse <= 100) score += 25; // Excellent
+      else if (pulse >= 50 && pulse <= 110) score += 20; // Good
+      else if (pulse >= 40 && pulse <= 120) score += 15; // Fair
+      else score += 5; // Needs attention
+    }
+
+    // Temperature check (normal: 97-99°F)
+    if (latestRecord.temperature) {
+      totalChecks++;
+      const temp = parseFloat(latestRecord.temperature);
+      if (temp >= 97 && temp <= 99) score += 25; // Excellent
+      else if (temp >= 96 && temp <= 100.4) score += 20; // Good
+      else if (temp >= 95 && temp <= 102) score += 15; // Fair
+      else score += 5; // Needs attention
+    }
+
+    return totalChecks > 0 ? Math.round(score / totalChecks * 4) : 0; // Convert to percentage
+  }
+
+  // Review Functions
+  const handleOpenReviewModal = (caregiver) => {
+    setSelectedCaregiver(caregiver);
+    const existingReview = reviews[caregiver.elderId];
+    if (existingReview) {
+      setEditingReview(existingReview);
+      setReviewRating(existingReview.rating);
+      setReviewComment(existingReview.comment);
+    } else {
+      setEditingReview(null);
+      setReviewRating(0);
+      setReviewComment("");
+    }
+    setShowReviewModal(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setShowReviewModal(false);
+    setSelectedCaregiver(null);
+    setEditingReview(null);
+    setReviewRating(0);
+    setReviewComment("");
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedCaregiver || reviewRating === 0) {
+      toast.error("Please provide a rating");
+      return;
+    }
+
+    const reviewData = {
+      elderId: localStorage.getItem("elderId"),
+      caregiverId: selectedCaregiver.elderId,
+      rating: reviewRating,
+      comment: reviewComment.trim()
+    };
+
+    try {
+      let response;
+      if (editingReview) {
+        // Update existing review
+        response = await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/${editingReview.reviewId}`,
+          reviewData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Review updated successfully");
+      } else {
+        // Add new review
+        response = await axios.post(
+          `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews`,
+          reviewData,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Review added successfully");
+      }
+
+      // Update local reviews state
+      setReviews(prev => ({
+        ...prev,
+        [selectedCaregiver.elderId]: response.data
+      }));
+
+      handleCloseReviewModal();
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      toast.error(err.response?.data || "Failed to submit review");
+    }
+  };
+
+  const handleDeleteReview = async (caregiverId) => {
+    const review = reviews[caregiverId];
+    if (!review) return;
+
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/${review.reviewId}`,
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          params: { elderId: localStorage.getItem("userEmail") }
+        }
+      );
+      
+      // Remove from local state
+      setReviews(prev => {
+        const updated = { ...prev };
+        delete updated[caregiverId];
+        return updated;
+      });
+      
+      toast.success("Review deleted successfully");
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      toast.error("Failed to delete review");
+    }
+  };
+
+  // Star Rating Component
+  const StarRating = ({ rating, setRating, readOnly = false, size = "w-6 h-6" }) => {
+    return (
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            disabled={readOnly}
+            onClick={() => !readOnly && setRating(star)}
+            className={`${readOnly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} transition-transform`}
+          >
+            {star <= rating ? (
+              <AiFillStar className={`${size} text-yellow-400`} />
+            ) : (
+              <AiOutlineStar className={`${size} text-gray-300`} />
+            )}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
   // Sidebar Navigation Item Component
   const NavItem = ({ id, icon: Icon, label }) => (
     <button
@@ -277,7 +478,7 @@ export default function GuardianDashboard() {
             G
           </div>
           <div>
-            <h1 className="font-bold text-xl text-gray-800">Guardian<span className="text-blue-600">Care</span></h1>
+            <h1 className="font-bold text-xl text-gray-800">Elder<span className="text-blue-600">Care</span></h1>
           </div>
         </div>
 
@@ -355,7 +556,7 @@ export default function GuardianDashboard() {
                       <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
                         <p className="text-sm text-blue-100 mb-1">Your Health Score</p>
                         <p className="text-4xl font-bold">
-                          {healthRecords.length > 0 ? '85%' : '--'}
+                          {healthRecords.length > 0 ? `${calculateHealthScore()}%` : '--'}
                         </p>
                       </div>
                     </div>
@@ -715,44 +916,76 @@ export default function GuardianDashboard() {
 
                 {elders.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {elders.map((caregiver, idx) => (
-                      <div key={idx} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-                        <div className="flex flex-col items-center text-center">
-                          <div className="w-24 h-24 rounded-full bg-purple-100 mb-4 overflow-hidden border-4 border-white shadow-md">
-                            {caregiver.profilePicture ? (
-                              <img src={caregiver.profilePicture} alt={caregiver.fullname} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-purple-500 text-2xl font-bold">
-                                {caregiver.fullname?.charAt(0) || "C"}
+                    {elders.map((caregiver, idx) => {
+                      const review = reviews[caregiver.elderId];
+                      return (
+                        <div key={idx} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                          <div className="flex flex-col items-center text-center">
+                            <div className="w-24 h-24 rounded-full bg-purple-100 mb-4 overflow-hidden border-4 border-white shadow-md">
+                              {caregiver.profilePicture ? (
+                                <img src={caregiver.profilePicture} alt={caregiver.fullname} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-purple-500 text-2xl font-bold">
+                                  {caregiver.fullname?.charAt(0) || "C"}
+                                </div>
+                              )}
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-800">{caregiver.fullname}</h3>
+                            <p className="text-sm text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full mt-1 mb-4">
+                              Professional Caregiver
+                            </p>
+
+                            {/* Rating Display */}
+                            {review && (
+                              <div className="mb-4">
+                                <StarRating rating={review.rating} readOnly size="w-5 h-5" />
+                                <p className="text-xs text-gray-500 mt-1">Your Rating</p>
                               </div>
                             )}
-                          </div>
-                          <h3 className="text-lg font-bold text-gray-800">{caregiver.fullname}</h3>
-                          <p className="text-sm text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full mt-1 mb-4">
-                            Professional Caregiver
-                          </p>
 
-                          <div className="w-full border-t border-gray-100 pt-4 space-y-2 mb-6">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Email</span>
-                              <span className="font-medium text-gray-700 truncate max-w-[150px]">{caregiver.email}</span>
+                            <div className="w-full border-t border-gray-100 pt-4 space-y-2 mb-6">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Email</span>
+                                <span className="font-medium text-gray-700 truncate max-w-[150px]">{caregiver.email}</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Phone</span>
+                                <span className="font-medium text-gray-700">{caregiver.contactNumber || "N/A"}</span>
+                              </div>
                             </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-500">Phone</span>
-                              <span className="font-medium text-gray-700">{caregiver.contactNumber || "N/A"}</span>
+
+                            <div className="w-full space-y-3">
+                              <button
+                                onClick={() => handleAddRequest(caregiver.elderId)}
+                                className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                              >
+                                <FaUsers className="w-4 h-4" />
+                                Connect Now
+                              </button>
+                              
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleOpenReviewModal(caregiver)}
+                                  className="flex-1 bg-blue-100 text-blue-700 font-medium py-2 px-3 rounded-lg hover:bg-blue-200 transition-all flex items-center justify-center gap-1 text-sm"
+                                >
+                                  <AiFillStar className="w-4 h-4" />
+                                  {review ? 'Edit Review' : 'Add Review'}
+                                </button>
+                                
+                                {review && (
+                                  <button
+                                    onClick={() => handleDeleteReview(caregiver.elderId)}
+                                    className="bg-red-100 text-red-700 font-medium py-2 px-3 rounded-lg hover:bg-red-200 transition-all text-sm"
+                                  >
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-
-                          <button
-                            onClick={() => handleAddRequest(caregiver.elderId)}
-                            className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center gap-2"
-                          >
-                            <FaUsers className="w-4 h-4" />
-                            Connect Now
-                          </button>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-20">
@@ -790,6 +1023,86 @@ export default function GuardianDashboard() {
               </div>
               <div className="p-6 max-h-[80vh] overflow-y-auto">
                 <ElderProfileForm />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && selectedCaregiver && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative"
+            >
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h3 className="font-bold text-lg text-gray-800">
+                  {editingReview ? 'Edit Review' : 'Add Review'}
+                </h3>
+                <button onClick={handleCloseReviewModal} className="p-2 hover:bg-gray-200 rounded-full transition">
+                  <HiOutlineX className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 rounded-full bg-purple-100 mx-auto mb-3 overflow-hidden">
+                    {selectedCaregiver.profilePicture ? (
+                      <img src={selectedCaregiver.profilePicture} alt={selectedCaregiver.fullname} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-purple-500 text-xl font-bold">
+                        {selectedCaregiver.fullname?.charAt(0) || "C"}
+                      </div>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-gray-800">{selectedCaregiver.fullname}</h4>
+                  <p className="text-sm text-gray-500">Professional Caregiver</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
+                    <div className="flex justify-center">
+                      <StarRating rating={reviewRating} setRating={setReviewRating} size="w-8 h-8" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Share your experience with this caregiver..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none"
+                      rows="4"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={handleCloseReviewModal}
+                    className="flex-1 bg-gray-100 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-200 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitReview}
+                    disabled={reviewRating === 0}
+                    className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {editingReview ? 'Update Review' : 'Submit Review'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

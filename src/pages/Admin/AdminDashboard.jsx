@@ -26,6 +26,9 @@ export default function AdminDashboard() {
   const [showProfile, setShowProfile] = useState(false);
   const [adminProfile, setAdminProfile] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [showUserDetails, setShowUserDetails] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userDetailsLoading, setUserDetailsLoading] = useState(false);
 
   useEffect(() => {
     if (token) fetchUsers();
@@ -77,6 +80,40 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleViewUserDetails = async (user) => {
+    setSelectedUser(user);
+    setShowUserDetails(true);
+    setUserDetailsLoading(true);
+
+    try {
+      // Fetch detailed user profile based on role
+      const endpoint = user.role === 'elder' || user.role === 'admin' 
+        ? `/profile/guardian/profile/${user.elderId}` 
+        : `/profile/caregiver/profile/${user.elderId}`;
+        
+      const res = await axios.get(
+        `${import.meta.env.VITE_BACKEND_URL}${endpoint}`,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`
+          } 
+        }
+      );
+      
+      // Merge basic user data with detailed profile
+      setSelectedUser({
+        ...user,
+        ...res.data,
+        detailedProfile: res.data
+      });
+    } catch (err) {
+      console.error("Error fetching user details:", err);
+      // Still show modal with basic user info if detailed fetch fails
+    } finally {
+      setUserDetailsLoading(false);
+    }
+  };
+
   const fetchAdminProfile = async () => {
     try {
       const res = await axios.get(
@@ -96,11 +133,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch = 
       u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      u.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Apply role filter based on active tab
+    if (activeTab === 'caregivers') {
+      return matchesSearch && u.role === 'caregiver';
+    }
+    if (activeTab === 'elders') {
+      return matchesSearch && u.role === 'elder';
+    }
+    
+    // For users tab, show all users
+    return matchesSearch;
+  });
 
   const totalUsers = users.length;
   const guardianCount = users.filter((u) => u.role === "elder").length;
@@ -185,6 +233,8 @@ export default function AdminDashboard() {
           <p className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Menu</p>
           <NavItem id="overview" icon={MdDashboard} label="Overview" />
           <NavItem id="users" icon={FaUsers} label="User Management" />
+          <NavItem id="elders" icon={AiOutlineHeart} label="Elders" />
+          <NavItem id="caregivers" icon={FaUserTie} label="Caregivers" />
         </nav>
 
         {/* Sidebar Footer */}
@@ -226,7 +276,10 @@ export default function AdminDashboard() {
               {isSidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
             </button>
             <h2 className="text-lg font-bold text-gray-800 capitalize">
-              {activeTab === 'overview' ? 'Dashboard' : activeTab === 'users' ? 'User Management' : activeTab}
+              {activeTab === 'overview' ? 'Dashboard' : 
+               activeTab === 'users' ? 'User Management' : 
+               activeTab === 'elders' ? 'Elders' :
+               activeTab === 'caregivers' ? 'Caregivers' : activeTab}
             </h2>
           </div>
         </header>
@@ -268,7 +321,7 @@ export default function AdminDashboard() {
                 {/* Quick Actions */}
                 <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                   <h3 className="font-bold text-gray-800 text-xl mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <button
                       onClick={() => setActiveTab('users')}
                       className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-blue-50 hover:bg-blue-100 transition-colors group"
@@ -279,13 +332,22 @@ export default function AdminDashboard() {
                       <span className="text-sm font-medium text-gray-700">Manage Users</span>
                     </button>
                     <button
-                      onClick={() => { setActiveTab('users'); setSearchTerm('elder'); }}
+                      onClick={() => { setActiveTab('elders'); setSearchTerm(''); }}
                       className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-green-50 hover:bg-green-100 transition-colors group"
                     >
                       <div className="w-12 h-12 rounded-xl bg-green-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
                         <AiOutlineHeart className="w-6 h-6" />
                       </div>
                       <span className="text-sm font-medium text-gray-700">View Elders</span>
+                    </button>
+                    <button
+                      onClick={() => { setActiveTab('caregivers'); setSearchTerm(''); }}
+                      className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-orange-50 hover:bg-orange-100 transition-colors group"
+                    >
+                      <div className="w-12 h-12 rounded-xl bg-orange-600 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                        <FaUserTie className="w-6 h-6" />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700">View Caregivers</span>
                     </button>
                     <button
                       onClick={fetchAdminProfile}
@@ -431,13 +493,22 @@ export default function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="px-6 py-4 text-right">
-                                <button
-                                  onClick={() => handleDelete(user.elderId)}
-                                  className="inline-flex items-center justify-center w-10 h-10 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-all active:scale-95"
-                                  title="Delete User"
-                                >
-                                  <FiTrash2 className="w-5 h-5" />
-                                </button>
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleViewUserDetails(user)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="View Details"
+                                  >
+                                    <HiOutlineUserCircle className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(user.elderId)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="Delete User"
+                                  >
+                                    <FiTrash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
                               </td>
                             </motion.tr>
                           ))}
@@ -451,6 +522,232 @@ export default function AdminDashboard() {
                 {!loading && filteredUsers.length > 0 && (
                   <div className="bg-gray-50 rounded-2xl p-4 text-center text-sm text-gray-600">
                     Showing {filteredUsers.length} of {totalUsers} total users
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Caregivers Section */}
+            {activeTab === "caregivers" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Caregivers</h2>
+                    <p className="text-gray-500 mt-1">Manage all registered caregivers in the system</p>
+                  </div>
+                  <div className="bg-orange-100 text-orange-800 px-4 py-2 rounded-xl text-sm font-medium">
+                    {caregiverCount} Total Caregivers
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="relative">
+                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search caregivers by name or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Caregivers Table */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  {loading ? (
+                    <div className="p-12 text-center text-gray-500">
+                      <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                      <p>Loading caregivers...</p>
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400">
+                      <FaUserTie className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium">No caregivers found</p>
+                      <p className="text-sm mt-2">Try adjusting your search criteria</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredUsers.map((user) => (
+                            <motion.tr
+                              key={user.elderId}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+                                    <FaUserTie className="w-5 h-5" />
+                                  </div>
+                                  <span className="font-medium text-gray-800">{user.fullName}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                              <td className="px-6 py-4">
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                                  Caregiver
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleViewUserDetails(user)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="View Details"
+                                  >
+                                    <HiOutlineUserCircle className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(user.elderId)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="Delete Caregiver"
+                                  >
+                                    <FiTrash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Caregiver Count Footer */}
+                {!loading && filteredUsers.length > 0 && (
+                  <div className="bg-gray-50 rounded-2xl p-4 text-center text-sm text-gray-600">
+                    Showing {filteredUsers.length} of {caregiverCount} total caregivers
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Elders Section */}
+            {activeTab === "elders" && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Elders</h2>
+                    <p className="text-gray-500 mt-1">Manage all registered elders in the system</p>
+                  </div>
+                  <div className="bg-green-100 text-green-800 px-4 py-2 rounded-xl text-sm font-medium">
+                    {guardianCount} Total Elders
+                  </div>
+                </div>
+
+                {/* Search Bar */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <div className="relative">
+                    <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      placeholder="Search elders by name or email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Elders Table */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  {loading ? (
+                    <div className="p-12 text-center text-gray-500">
+                      <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                      <p>Loading elders...</p>
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400">
+                      <AiOutlineHeart className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                      <p className="text-lg font-medium">No elders found</p>
+                      <p className="text-sm mt-2">Try adjusting your search criteria</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredUsers.map((user) => (
+                            <motion.tr
+                              key={user.elderId}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="hover:bg-gray-50 transition-colors"
+                            >
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                    <AiOutlineHeart className="w-5 h-5" />
+                                  </div>
+                                  <span className="font-medium text-gray-800">{user.fullName}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-gray-600">{user.email}</td>
+                              <td className="px-6 py-4">
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                  Elder
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    onClick={() => handleViewUserDetails(user)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="View Details"
+                                  >
+                                    <HiOutlineUserCircle className="w-5 h-5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(user.elderId)}
+                                    className="inline-flex items-center justify-center w-10 h-10 bg-red-100 hover:bg-red-600 text-red-600 hover:text-white rounded-lg transition-all active:scale-95"
+                                    title="Delete Elder"
+                                  >
+                                    <FiTrash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Elder Count Footer */}
+                {!loading && filteredUsers.length > 0 && (
+                  <div className="bg-gray-50 rounded-2xl p-4 text-center text-sm text-gray-600">
+                    Showing {filteredUsers.length} of {guardianCount} total elders
                   </div>
                 )}
               </motion.div>
@@ -482,6 +779,191 @@ export default function AdminDashboard() {
               </div>
               <div className="p-6 max-h-[80vh] overflow-y-auto">
                 <AdminProfileForm />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* User Details Modal */}
+      <AnimatePresence>
+        {showUserDetails && selectedUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden relative"
+            >
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    selectedUser.role === 'elder' ? 'bg-green-100 text-green-600' :
+                    selectedUser.role === 'caregiver' ? 'bg-orange-100 text-orange-600' :
+                    'bg-purple-100 text-purple-600'
+                  }`}>
+                    {selectedUser.role === 'elder' ? <AiOutlineHeart className="w-5 h-5" /> :
+                      selectedUser.role === 'caregiver' ? <FaUserTie className="w-5 h-5" /> :
+                      <MdAdminPanelSettings className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg text-gray-800">User Details</h3>
+                    <p className="text-sm text-gray-500">
+                      {selectedUser.role === 'elder' ? 'Elder' : 
+                       selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'} Profile
+                    </p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowUserDetails(false)} 
+                  className="p-2 hover:bg-gray-200 rounded-full transition"
+                >
+                  <HiOutlineX className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 max-h-[80vh] overflow-y-auto">
+                {userDetailsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="animate-spin w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-gray-500">Loading user details...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="bg-gray-50 rounded-2xl p-6">
+                      <h4 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                        <HiOutlineUserCircle className="w-5 h-5" />
+                        Basic Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="text-center md:text-left">
+                          {selectedUser.profilePicture || selectedUser.detailedProfile?.profilePicture ? (
+                            <img 
+                              src={selectedUser.profilePicture || selectedUser.detailedProfile?.profilePicture} 
+                              alt="Profile" 
+                              className="w-24 h-24 rounded-full object-cover mx-auto md:mx-0 mb-4 border-4 border-white shadow-lg" 
+                            />
+                          ) : (
+                            <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center mx-auto md:mx-0 mb-4 text-gray-400 text-2xl font-bold">
+                              {selectedUser.fullName?.charAt(0) || selectedUser.email?.charAt(0) || 'U'}
+                            </div>
+                          )}
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
+                            selectedUser.role === 'elder' ? 'bg-green-100 text-green-700' :
+                            selectedUser.role === 'caregiver' ? 'bg-orange-100 text-orange-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {selectedUser.role === 'elder' ? 'Elder' : 
+                             selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'}
+                          </span>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-sm font-medium text-gray-500 block">Full Name</label>
+                            <p className="text-gray-800 font-medium">{selectedUser.fullName || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-500 block">Email Address</label>
+                            <p className="text-gray-800">{selectedUser.email || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-500 block">User ID</label>
+                            <p className="text-gray-800 font-mono text-sm">{selectedUser.elderId || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-gray-500 block">Contact Number</label>
+                            <p className="text-gray-800">{selectedUser.contactNumber || selectedUser.detailedProfile?.phone || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detailed Profile Information */}
+                    {selectedUser.detailedProfile && (
+                      <div className="bg-blue-50 rounded-2xl p-6">
+                        <h4 className="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
+                          <FaUsers className="w-5 h-5" />
+                          Additional Information
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {selectedUser.detailedProfile.age && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500 block">Age</label>
+                              <p className="text-gray-800">{selectedUser.detailedProfile.age}</p>
+                            </div>
+                          )}
+                          {selectedUser.detailedProfile.gender && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-500 block">Gender</label>
+                              <p className="text-gray-800 capitalize">{selectedUser.detailedProfile.gender}</p>
+                            </div>
+                          )}
+                          {selectedUser.detailedProfile.address && (
+                            <div className="md:col-span-2">
+                              <label className="text-sm font-medium text-gray-500 block">Address</label>
+                              <p className="text-gray-800">{selectedUser.detailedProfile.address}</p>
+                            </div>
+                          )}
+                          {/* Guardian Information for Elders */}
+                          {selectedUser.role === 'elder' && (
+                            <>
+                              {selectedUser.detailedProfile.guardianFullname && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-500 block">Guardian Name</label>
+                                  <p className="text-gray-800">{selectedUser.detailedProfile.guardianFullname}</p>
+                                </div>
+                              )}
+                              {selectedUser.detailedProfile.guardianEmail && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-500 block">Guardian Email</label>
+                                  <p className="text-gray-800">{selectedUser.detailedProfile.guardianEmail}</p>
+                                </div>
+                              )}
+                              {selectedUser.detailedProfile.guardianPhone && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-500 block">Guardian Phone</label>
+                                  <p className="text-gray-800">{selectedUser.detailedProfile.guardianPhone}</p>
+                                </div>
+                              )}
+                              {selectedUser.detailedProfile.guardianRelationship && (
+                                <div>
+                                  <label className="text-sm font-medium text-gray-500 block">Guardian Relationship</label>
+                                  <p className="text-gray-800 capitalize">{selectedUser.detailedProfile.guardianRelationship}</p>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() => setShowUserDetails(false)}
+                        className="px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+                      >
+                        Close
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowUserDetails(false);
+                          handleDelete(selectedUser.elderId);
+                        }}
+                        className="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center gap-2"
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                        Delete User
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
