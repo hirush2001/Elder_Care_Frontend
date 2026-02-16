@@ -61,7 +61,7 @@ const ElderProfileForm = () => {
   return (
     <div className="max-w-xl mx-auto mt-10 p-6 bg-white shadow-md rounded-xl">
       <h2 className="text-2xl font-bold mb-4 text-center">Elder Profile</h2>
-      {message && <p className="mb-4 text-center text-green-600">{message}</p>}
+      {message && <p className="mb-4 text-center text-green-700">{message}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1 font-semibold">Full Name</label>
