@@ -252,12 +252,12 @@ export default function Login() {
             <motion.div variants={itemVariants}>
               <div className="flex justify-between items-center mb-2 ml-1">
                 <label className="text-sm font-bold text-slate-700">Password</label>
-                <button
+               {/* <button
                   type="button"
                   className="text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:underline"
                 >
                   FORGOT PASSWORD?
-                </button>
+                </button> */}
               </div>
 
               <div className="relative">

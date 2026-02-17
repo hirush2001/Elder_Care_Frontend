@@ -54,6 +54,13 @@ export default function GuardianDashboard() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [editingReview, setEditingReview] = useState(null);
+  
+  // New state for caregiver reviews and ratings
+  const [caregiverReviews, setCaregiverReviews] = useState({});
+  const [caregiverRatings, setCaregiverRatings] = useState({});
+  const [showAllReviewsModal, setShowAllReviewsModal] = useState(false);
+  const [selectedCaregiverForReviews, setSelectedCaregiverForReviews] = useState(null);
+  const [isLoadingCaregivers, setIsLoadingCaregivers] = useState(false);
 
   // Fetch health records, reminders, caregivers
   useEffect(() => {
@@ -73,6 +80,7 @@ export default function GuardianDashboard() {
       .then((res) => setReminders(res.data.records || []))
       .catch((err) => console.error("Error fetching reminders:", err));
 
+    setIsLoadingCaregivers(true);
     axios
       .get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/elder`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -86,6 +94,8 @@ export default function GuardianDashboard() {
         }
         const caregivers = data.filter((item) => item.role === "caregiver");
         setElders(caregivers);
+        // Fetch additional data for each caregiver
+        fetchCaregiverData(caregivers);
       })
       .catch((err) => {
         console.error("Error fetching caregivers:", err);
@@ -111,7 +121,7 @@ export default function GuardianDashboard() {
     if (!token) return;
     
     try {
-      const elderReviews = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/elder/${localStorage.getItem("userEmail")}`, {
+      const elderReviews = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/elder/${localStorage.getItem("userEmail")}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -122,6 +132,64 @@ export default function GuardianDashboard() {
       setReviews(reviewsMap);
     } catch (err) {
       console.error("Error fetching reviews:", err);
+    }
+  };
+
+  // Fetch all reviews and ratings for caregivers
+  const fetchCaregiverData = async (caregivers) => {
+    if (!token || !caregivers.length) return;
+    
+    setIsLoadingCaregivers(true);
+    const reviewsData = {};
+    const ratingsData = {};
+    
+    try {
+      const fetchPromises = caregivers.map(async (caregiver) => {
+        try {
+          // Fetch review statistics (includes both reviews and ratings)
+          const stats = await axios.get(
+            `${import.meta.env.VITE_BACKEND_URL}/api/reviews/stats/${caregiver.elderId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          
+          // Ensure reviews data is clean
+          const cleanReviews = Array.isArray(stats.data.reviews) ? stats.data.reviews.map(review => ({
+            ...review,
+            review: String(review.review || ''),
+            rate: String(review.rate || '0'),
+            elderId: String(review.elder?.email || review.elderId || ''),
+            reviewId: review.reviewId || review.id
+          })) : [];
+          
+          return {
+            id: caregiver.elderId,
+            reviews: cleanReviews,
+            ratings: {
+              averageRating: Number(stats.data.averageRating) || 0,
+              totalReviews: Number(stats.data.totalReviews) || 0
+            }
+          };
+        } catch (err) {
+          console.error(`Error fetching data for caregiver ${caregiver.elderId}:`, err);
+          return {
+            id: caregiver.elderId,
+            reviews: [],
+            ratings: { averageRating: 0, totalReviews: 0 }
+          };
+        }
+      });
+
+      const results = await Promise.all(fetchPromises);
+      
+      results.forEach(result => {
+        reviewsData[result.id] = result.reviews;
+        ratingsData[result.id] = result.ratings;
+      });
+      
+      setCaregiverReviews(reviewsData);
+      setCaregiverRatings(ratingsData);
+    } finally {
+      setIsLoadingCaregivers(false);
     }
   };
 
@@ -294,8 +362,8 @@ export default function GuardianDashboard() {
     const existingReview = reviews[caregiver.elderId];
     if (existingReview) {
       setEditingReview(existingReview);
-      setReviewRating(existingReview.rating);
-      setReviewComment(existingReview.comment);
+      setReviewRating(parseInt(existingReview.rate) || 0);
+      setReviewComment(String(existingReview.review || ''));
     } else {
       setEditingReview(null);
       setReviewRating(0);
@@ -319,10 +387,9 @@ export default function GuardianDashboard() {
     }
 
     const reviewData = {
-      elderId: localStorage.getItem("elderId"),
-      caregiverId: selectedCaregiver.elderId,
-      rating: reviewRating,
-      comment: reviewComment.trim()
+      careId: selectedCaregiver.elderId,
+      rate: reviewRating.toString(),
+      review: reviewComment.trim()
     };
 
     try {
@@ -330,7 +397,7 @@ export default function GuardianDashboard() {
       if (editingReview) {
         // Update existing review
         response = await axios.put(
-          `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/${editingReview.reviewId}`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/reviews/update/${editingReview.reviewId}`,
           reviewData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -338,7 +405,7 @@ export default function GuardianDashboard() {
       } else {
         // Add new review
         response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews`,
+          `${import.meta.env.VITE_BACKEND_URL}/api/reviews/create`,
           reviewData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -350,6 +417,9 @@ export default function GuardianDashboard() {
         ...prev,
         [selectedCaregiver.elderId]: response.data
       }));
+
+      // Refresh caregiver data
+      await fetchCaregiverData([selectedCaregiver]);
 
       handleCloseReviewModal();
     } catch (err) {
@@ -364,10 +434,9 @@ export default function GuardianDashboard() {
 
     try {
       await axios.delete(
-        `${import.meta.env.VITE_BACKEND_URL}/api/caregiver-reviews/${review.reviewId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/reviews/delete/${review.reviewId}`,
         { 
-          headers: { Authorization: `Bearer ${token}` },
-          params: { elderId: localStorage.getItem("userEmail") }
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
       
@@ -378,12 +447,71 @@ export default function GuardianDashboard() {
         return updated;
       });
       
+      // Refresh caregiver data
+      const caregiver = elders.find(c => c.elderId === caregiverId);
+      if (caregiver) {
+        fetchCaregiverData([caregiver]);
+      }
+      
       toast.success("Review deleted successfully");
     } catch (err) {
       console.error("Error deleting review:", err);
       toast.error("Failed to delete review");
     }
   };
+
+  // Show all reviews for a caregiver
+  const handleShowAllReviews = (caregiver) => {
+    setSelectedCaregiverForReviews(caregiver);
+    setShowAllReviewsModal(true);
+  };
+
+  // Delete review from all reviews modal
+  const handleDeleteReviewFromModal = async (reviewId, caregiverId) => {
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_BACKEND_URL}/api/reviews/delete/${reviewId}`,
+        { 
+          headers: { Authorization: `Bearer ${token}` },
+          params: { elderId: localStorage.getItem("userEmail") }
+        }
+      );
+      
+      // Refresh caregiver data
+      const caregiver = elders.find(c => c.elderId === caregiverId);
+      if (caregiver) {
+        await fetchCaregiverData([caregiver]);
+        await fetchReviewsData(); // Refresh user's own reviews
+      }
+      
+      toast.success("Review deleted successfully");
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      toast.error("Failed to delete review");
+    }
+  };
+
+  // Skeleton Loader for Caregivers
+  const CaregiverSkeleton = () => (
+    <div className="bg-white rounded-3xl p-6 shadow-md border border-gray-100 animate-pulse">
+      <div className="flex flex-col items-center">
+        <div className="w-24 h-24 rounded-full bg-gray-200 mb-4" />
+        <div className="h-6 bg-gray-200 w-32 rounded mb-2" />
+        <div className="h-4 bg-gray-200 w-40 rounded-full mb-4" />
+        <div className="w-full space-y-3 mt-4">
+          <div className="h-4 bg-gray-200 w-full rounded" />
+          <div className="h-4 bg-gray-200 w-full rounded" />
+        </div>
+        <div className="w-full space-y-3 mt-6">
+          <div className="h-12 bg-gray-200 w-full rounded-xl" />
+          <div className="flex gap-2">
+            <div className="h-10 bg-gray-200 flex-1 rounded-lg" />
+            <div className="h-10 bg-gray-200 w-16 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   // Star Rating Component
   const StarRating = ({ rating, setRating, readOnly = false, size = "w-6 h-6" }) => {
@@ -914,84 +1042,129 @@ export default function GuardianDashboard() {
                   </div>
                 </div>
 
-                {elders.length > 0 ? (
+                {isLoadingCaregivers || elders.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {isLoadingCaregivers ? (
+                      [1, 2, 3, 4, 5, 6].map((i) => <CaregiverSkeleton key={i} />)
+                    ) : (
+                      elders.length === 0 && (
+                        <div className="col-span-full text-center py-20">
+                          <FaUsers className="w-20 h-20 mx-auto mb-4 text-gray-300 opacity-50" />
+                          <p className="text-gray-400 text-lg font-medium">No caregivers available</p>
+                          <p className="text-sm text-gray-400 mt-2">Please check back later</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {elders.map((caregiver, idx) => {
                       const review = reviews[caregiver.elderId];
+                      const caregiverRating = caregiverRatings[caregiver.elderId];
+                      const allReviews = caregiverReviews[caregiver.elderId] || [];
                       return (
-                        <div key={idx} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                        <motion.div 
+                          key={idx} 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
+                        >
                           <div className="flex flex-col items-center text-center">
-                            <div className="w-24 h-24 rounded-full bg-purple-100 mb-4 overflow-hidden border-4 border-white shadow-md">
-                              {caregiver.profilePicture ? (
-                                <img src={caregiver.profilePicture} alt={caregiver.fullname} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-purple-500 text-2xl font-bold">
-                                  {caregiver.fullname?.charAt(0) || "C"}
-                                </div>
-                              )}
+                            <div className="relative mb-4">
+                              <div className="w-24 h-24 rounded-full bg-blue-50 overflow-hidden border-4 border-white shadow-md group-hover:border-blue-100 transition-colors">
+                                {caregiver.profilePicture ? (
+                                  <img src={caregiver.profilePicture} alt={caregiver.fullname} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-blue-500 text-2xl font-bold">
+                                    {caregiver.fullname?.charAt(0) || "C"}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white shadow-sm" title="Available" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">{caregiver.fullname}</h3>
-                            <p className="text-sm text-purple-600 font-medium bg-purple-50 px-3 py-1 rounded-full mt-1 mb-4">
+
+                            <h3 className="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{caregiver.fullname}</h3>
+                            <p className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full mt-1 mb-4 uppercase tracking-wider">
                               Professional Caregiver
                             </p>
 
-                            {/* Rating Display */}
+                            {/* Average Rating Display */}
+                            <div className="mb-4 w-full">
+                              {caregiverRating && caregiverRating.totalReviews > 0 ? (
+                                <div className="bg-gray-50 rounded-2xl p-3">
+                                  <div className="flex items-center justify-center gap-2 mb-1">
+                                    <StarRating rating={Math.round(Number(caregiverRating.averageRating) || 0)} readOnly size="w-4 h-4" />
+                                    <span className="text-sm font-bold text-gray-800">
+                                      {Number(caregiverRating.averageRating || 0).toFixed(1)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+                                    <span className="font-medium">{Number(caregiverRating.totalReviews || 0)} reviews</span>
+                                    {allReviews.length > 0 && (
+                                      <>
+                                        <span>•</span>
+                                        <button
+                                          onClick={() => handleShowAllReviews(caregiver)}
+                                          className="text-blue-600 font-bold hover:underline"
+                                        >
+                                          View all
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="py-4">
+                                  <p className="text-xs text-gray-400 italic">No ratings yet</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* User's Rating Quick Info */}
                             {review && (
-                              <div className="mb-4">
-                                <StarRating rating={review.rating} readOnly size="w-5 h-5" />
-                                <p className="text-xs text-gray-500 mt-1">Your Rating</p>
+                              <div className="mb-4 bg-green-50 rounded-xl p-3 w-full border border-green-100">
+                                <div className="flex items-center justify-center gap-2">
+                                  <AiFillStar className="w-4 h-4 text-green-600" />
+                                  <span className="text-xs font-bold text-green-700 uppercase tracking-tighter">Your Review: {parseInt(review.rate)}/5</span>
+                                </div>
                               </div>
                             )}
 
-                            <div className="w-full border-t border-gray-100 pt-4 space-y-2 mb-6">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Email</span>
-                                <span className="font-medium text-gray-700 truncate max-w-[150px]">{caregiver.email}</span>
+                            <div className="w-full border-t border-gray-100 pt-4 space-y-2 mb-6 text-left">
+                              <div className="flex items-center gap-3 text-sm">
+                                <span className="text-gray-400 bg-gray-50 p-1.5 rounded-lg text-xs">Email</span>
+                                <span className="font-medium text-gray-600 truncate flex-1">{caregiver.email}</span>
                               </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Phone</span>
-                                <span className="font-medium text-gray-700">{caregiver.contactNumber || "N/A"}</span>
+                              <div className="flex items-center gap-3 text-sm">
+                                <span className="text-gray-400 bg-gray-50 p-1.5 rounded-lg text-xs">Phone</span>
+                                <span className="font-medium text-gray-600">{caregiver.contactNumber || "Contact not provided"}</span>
                               </div>
                             </div>
 
                             <div className="w-full space-y-3">
                               <button
                                 onClick={() => handleAddRequest(caregiver.elderId)}
-                                className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-blue-100 hover:bg-blue-700 hover:shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2"
                               >
                                 <FaUsers className="w-4 h-4" />
                                 Connect Now
                               </button>
                               
-                              <div className="flex gap-2">
+                              {!review && (
                                 <button
                                   onClick={() => handleOpenReviewModal(caregiver)}
-                                  className="flex-1 bg-blue-100 text-blue-700 font-medium py-2 px-3 rounded-lg hover:bg-blue-200 transition-all flex items-center justify-center gap-1 text-sm"
+                                  className="w-full bg-gray-100 text-gray-700 font-bold py-2.5 px-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-1.5 text-xs"
                                 >
-                                  <AiFillStar className="w-4 h-4" />
-                                  {review ? 'Edit Review' : 'Add Review'}
+                                  <AiOutlineStar className="w-4 h-4" />
+                                  Add Review
                                 </button>
-                                
-                                {review && (
-                                  <button
-                                    onClick={() => handleDeleteReview(caregiver.elderId)}
-                                    className="bg-red-100 text-red-700 font-medium py-2 px-3 rounded-lg hover:bg-red-200 transition-all text-sm"
-                                  >
-                                    Delete
-                                  </button>
-                                )}
-                              </div>
+                              )}
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
-                  </div>
-                ) : (
-                  <div className="text-center py-20">
-                    <FaUsers className="w-20 h-20 mx-auto mb-4 text-gray-300 opacity-50" />
-                    <p className="text-gray-400 text-lg font-medium">No caregivers available</p>
-                    <p className="text-sm text-gray-400 mt-2">Please check back later</p>
                   </div>
                 )}
               </motion.div>
@@ -1039,10 +1212,10 @@ export default function GuardianDashboard() {
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden relative"
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative border border-gray-100"
             >
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="font-bold text-lg text-gray-800">
@@ -1054,55 +1227,235 @@ export default function GuardianDashboard() {
               </div>
               
               <div className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 rounded-full bg-purple-100 mx-auto mb-3 overflow-hidden">
-                    {selectedCaregiver.profilePicture ? (
-                      <img src={selectedCaregiver.profilePicture} alt={selectedCaregiver.fullname} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-purple-500 text-xl font-bold">
-                        {selectedCaregiver.fullname?.charAt(0) || "C"}
-                      </div>
-                    )}
+                <div className="text-center mb-8">
+                  <div className="relative inline-block mb-4">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-50 to-blue-100 mx-auto overflow-hidden border-4 border-white shadow-lg">
+                      {selectedCaregiver.profilePicture ? (
+                        <img src={selectedCaregiver.profilePicture} alt={selectedCaregiver.fullname} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-blue-500 text-2xl font-black">
+                          {selectedCaregiver.fullname?.charAt(0) || "C"}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <h4 className="font-bold text-gray-800">{selectedCaregiver.fullname}</h4>
-                  <p className="text-sm text-gray-500">Professional Caregiver</p>
+                  <h4 className="font-black text-xl text-gray-800 tracking-tight">{selectedCaregiver.fullname}</h4>
+                  <p className="text-sm text-blue-500 font-bold uppercase tracking-widest mt-1">Professional Caregiver</p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rating *</label>
-                    <div className="flex justify-center">
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-4 text-center">Your Rating</label>
+                    <div className="flex justify-center scale-150 py-2">
                       <StarRating rating={reviewRating} setRating={setReviewRating} size="w-8 h-8" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
-                    <textarea
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      placeholder="Share your experience with this caregiver..."
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none"
-                      rows="4"
-                    />
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Your Feedback</label>
+                    <div className="relative group">
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="What was your experience like?"
+                        className="w-full bg-gray-50 border-2 border-transparent rounded-2xl px-5 py-4 outline-none focus:bg-white focus:border-blue-500/20 focus:ring-4 focus:ring-blue-500/5 transition-all resize-none text-gray-700 min-h-[120px]"
+                      />
+                      <div className="absolute bottom-4 right-4 text-[10px] font-bold text-gray-300 pointer-events-none uppercase">
+                        Optional
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-6">
+                <div className="flex gap-4 mt-8">
                   <button
                     onClick={handleCloseReviewModal}
-                    className="flex-1 bg-gray-100 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-200 transition-all"
+                    className="flex-1 bg-gray-50 text-gray-500 font-bold py-4 rounded-2xl hover:bg-gray-100 transition-all active:scale-95"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmitReview}
                     disabled={reviewRating === 0}
-                    className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                   >
                     {editingReview ? 'Update Review' : 'Submit Review'}
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* All Reviews Modal */}
+      <AnimatePresence>
+        {showAllReviewsModal && selectedCaregiverForReviews && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden relative"
+            >
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                  <h3 className="font-bold text-lg text-gray-800">Reviews for {selectedCaregiverForReviews.fullname}</h3>
+                  <p className="text-sm text-gray-500">
+                    {caregiverRatings[selectedCaregiverForReviews.elderId]?.totalReviews || 0} total reviews
+                    {caregiverRatings[selectedCaregiverForReviews.elderId]?.averageRating && (
+                      <span> • Average: {caregiverRatings[selectedCaregiverForReviews.elderId].averageRating.toFixed(1)} ⭐</span>
+                    )}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowAllReviewsModal(false)} 
+                  className="p-2 hover:bg-gray-200 rounded-full transition"
+                >
+                  <HiOutlineX className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="p-6 max-h-[70vh] overflow-y-auto">
+                {/* Rating Distribution Summary */}
+                {caregiverReviews[selectedCaregiverForReviews.elderId]?.length > 0 && (
+                  <div className="mb-8 bg-gray-50 rounded-3xl p-6 border border-gray-100 flex flex-col md:flex-row items-center gap-8">
+                    <div className="text-center">
+                      <p className="text-5xl font-black text-gray-800 mb-1">
+                        {caregiverRatings[selectedCaregiverForReviews.elderId]?.averageRating.toFixed(1)}
+                      </p>
+                      <StarRating rating={Math.round(caregiverRatings[selectedCaregiverForReviews.elderId]?.averageRating || 0)} readOnly size="w-5 h-5" />
+                      <p className="text-xs text-gray-400 font-bold mt-2 uppercase tracking-widest">
+                        {caregiverRatings[selectedCaregiverForReviews.elderId]?.totalReviews} Reviews
+                      </p>
+                    </div>
+                    
+                    <div className="flex-1 w-full space-y-2">
+                      {[5, 4, 3, 2, 1].map((star) => {
+                        const reviews = caregiverReviews[selectedCaregiverForReviews.elderId] || [];
+                        const count = reviews.filter(r => Math.round(Number(r.rate)) === star).length;
+                        const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                        return (
+                          <div key={star} className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-gray-500 w-3">{star}</span>
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                              <motion.div 
+                                initial={{ width: 0 }}
+                                animate={{ width: `${percentage}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="h-full bg-yellow-400 rounded-full" 
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-gray-400 w-8">{count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {caregiverReviews[selectedCaregiverForReviews.elderId]?.length > 0 ? (
+                  <div className="space-y-4">
+                    {caregiverReviews[selectedCaregiverForReviews.elderId].map((review, idx) => {
+                      const isOwnReview = review.elderId === localStorage.getItem("userEmail");
+                      return (
+                        <motion.div 
+                          key={idx} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className={`p-5 rounded-2xl border transition-all ${isOwnReview ? 'bg-blue-50 border-blue-100 shadow-sm' : 'bg-white border-gray-100'}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-4 mb-3">
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 text-lg font-bold shadow-sm border-2 border-white">
+                                  {review.elder?.fullname ? review.elder.fullname.charAt(0).toUpperCase() : 
+                                   review.elderName ? review.elderName.charAt(0).toUpperCase() : 
+                                   review.elderId?.charAt(0).toUpperCase() || 'U'}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-bold text-gray-800">
+                                      {isOwnReview ? 'You' : (review.elder?.fullname || review.elderName || 'Anonymous')}
+                                    </p>
+                                    {isOwnReview && <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter">Your Review</span>}
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <StarRating rating={parseInt(review.rate)} readOnly size="w-3.5 h-3.5" />
+                                    <span className="text-[11px] font-semibold text-gray-400">
+                                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-US', { 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                      }) : 'Unknown date'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              {review.review && (
+                                <div className="bg-gray-50/50 rounded-xl p-4 ml-1">
+                                  <p className="text-gray-700 text-sm leading-relaxed italic">"{String(review.review)}"</p>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Only show edit/delete for logged-in user's own reviews */}
+                            {isOwnReview && (
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => {
+                                    setSelectedCaregiver(selectedCaregiverForReviews);
+                                    setEditingReview(review);
+                                    setReviewRating(parseInt(review.rate));
+                                    setReviewComment(String(review.review || ''));
+                                    setShowAllReviewsModal(false);
+                                    setShowReviewModal(true);
+                                  }}
+                                  className="text-blue-600 hover:bg-white p-2.5 rounded-xl transition-all shadow-sm border border-transparent hover:border-blue-100"
+                                  title="Edit review"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteReviewFromModal(review.reviewId, selectedCaregiverForReviews.elderId)}
+                                  className="text-red-600 hover:bg-white p-2.5 rounded-xl transition-all shadow-sm border border-transparent hover:border-red-100"
+                                  title="Delete review"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                              </div>
+                            )} 
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <AiFillStar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-gray-500 text-lg font-medium">No reviews yet</p>
+                    <p className="text-sm text-gray-400 mt-2">Be the first to leave a review for this caregiver</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
+                <button
+                  onClick={() => {
+                    setShowAllReviewsModal(false);
+                    handleOpenReviewModal(selectedCaregiverForReviews);
+                  }}
+                  className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                >
+                  <AiFillStar className="w-4 h-4" />
+                  Add Your Review
+                </button>
               </div>
             </motion.div>
           </motion.div>
