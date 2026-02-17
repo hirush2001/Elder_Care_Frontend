@@ -35,7 +35,7 @@ export default function AdminDashboard() {
       );
       setUsers(res.data.users || []);
     } catch (err) {
-      toast.error("Failed to load users");
+      toast.error("failed to load users");
     } finally {
       setLoading(false);
     }
