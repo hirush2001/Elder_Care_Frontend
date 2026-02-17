@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                 onClick={() => setDeleteModal({ show: false })}
                 className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-xl"
               >
-                Cancel
+                CAncel
               </button>
 
               <button
