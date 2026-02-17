@@ -35,7 +35,7 @@ export default function AdminDashboard() {
       );
       setUsers(res.data.users || []);
     } catch (err) {
-      toast.error("Failed to load users");
+      toast.error("failed to load users");
     } finally {
       setLoading(false);
     }
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
                 onClick={() => setDeleteModal({ show: false })}
                 className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded-xl"
               >
-                CAncel
+                Cancel
               </button>
 
               <button
