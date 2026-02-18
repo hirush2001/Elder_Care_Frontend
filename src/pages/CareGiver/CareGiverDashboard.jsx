@@ -12,6 +12,7 @@ import CaregiverProfileForm from "./CareGiverProfile";
 export default function CareGiverDashboard() {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail") || "Caregiver";
+  const userId = localStorage.getItem("elderId");
   const token = localStorage.getItem("token");
 
   // Navigation
@@ -263,6 +264,7 @@ export default function CareGiverDashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm text-gray-800 truncate">{userEmail}</p>
                 <p className="text-xs text-gray-500">Caregiver</p>
+                {userId && <p className="text-xs text-green-600 font-mono mt-0.5">ID: {userId}</p>}
               </div>
             </div>
             <button onClick={fetchCaregiverProfile} className="w-full text-xs font-medium text-green-600 hover:underline text-left">
@@ -558,7 +560,7 @@ export default function CareGiverDashboard() {
 
       {/* Chat Widget */}
       <div className="fixed bottom-6 right-6 z-40">
-        
+
       </div>
     </div>
   );

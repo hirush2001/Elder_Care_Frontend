@@ -14,7 +14,7 @@ const Aprofile = () => {
 
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
-  
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,7 +28,7 @@ const Aprofile = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("token");
-       // Assuming JWT is stored in localStorage
+      // Assuming JWT is stored in localStorage
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/profile/elderprofile`,
         formData,
@@ -48,7 +48,7 @@ const Aprofile = () => {
         phone: "",
         address: "",
       })
-        navigate("/admindashboard");
+      navigate("/admindashboard");
     } catch (error) {
       console.error(error);
       setMessage("Failed to add profile. Please try again.");

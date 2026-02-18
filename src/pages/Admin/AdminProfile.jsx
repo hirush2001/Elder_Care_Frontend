@@ -86,10 +86,10 @@ export default function AdminProfileForm({ regId }) {
       setEditMode(false);
       setNewProfileImage(null);
 
-      toast.success("Caregiver profile updated successfully!");
+      toast.success("Admin profile updated successfully!");
     } catch (err) {
       console.error("Update error:", err);
-      toast.error("Failed to update caregiver profile");
+      toast.error("Failed to update admin profile");
     }
   };
 

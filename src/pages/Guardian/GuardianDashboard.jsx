@@ -23,6 +23,7 @@ import {
 export default function GuardianDashboard() {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail") || "Guardian";
+  const userId = localStorage.getItem("elderId");
   const token = localStorage.getItem("token");
 
   // Navigation
@@ -54,7 +55,7 @@ export default function GuardianDashboard() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [editingReview, setEditingReview] = useState(null);
-  
+
   // New state for caregiver reviews and ratings
   const [caregiverReviews, setCaregiverReviews] = useState({});
   const [caregiverRatings, setCaregiverRatings] = useState({});
@@ -111,7 +112,7 @@ export default function GuardianDashboard() {
         setProfileImage(res.data.profilePicture);
       })
       .catch((err) => console.error("Error loading profile:", err));
-      
+
     // Fetch reviews for each caregiver
     fetchReviewsData();
   }, [token]);
@@ -119,30 +120,37 @@ export default function GuardianDashboard() {
   // Fetch reviews data
   const fetchReviewsData = async () => {
     if (!token) return;
-    
+
     try {
       const elderReviews = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/elder/${localStorage.getItem("userEmail")}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       const reviewsMap = {};
-      elderReviews.data.forEach(review => {
+      // Check if data exists and is an array
+      const reviewsData = Array.isArray(elderReviews.data)
+        ? elderReviews.data
+        : (elderReviews.data?.reviews || []);
+
+      reviewsData.forEach(review => {
         reviewsMap[review.caregiverId] = review;
       });
       setReviews(reviewsMap);
     } catch (err) {
       console.error("Error fetching reviews:", err);
+      // Set empty reviews on error to prevent undefined state
+      setReviews({});
     }
   };
 
   // Fetch all reviews and ratings for caregivers
   const fetchCaregiverData = async (caregivers) => {
     if (!token || !caregivers.length) return;
-    
+
     setIsLoadingCaregivers(true);
     const reviewsData = {};
     const ratingsData = {};
-    
+
     try {
       const fetchPromises = caregivers.map(async (caregiver) => {
         try {
@@ -151,7 +159,7 @@ export default function GuardianDashboard() {
             `${import.meta.env.VITE_BACKEND_URL}/api/reviews/stats/${caregiver.elderId}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          
+
           // Ensure reviews data is clean
           const cleanReviews = Array.isArray(stats.data.reviews) ? stats.data.reviews.map(review => ({
             ...review,
@@ -160,7 +168,7 @@ export default function GuardianDashboard() {
             elderId: String(review.elder?.email || review.elderId || ''),
             reviewId: review.reviewId || review.id
           })) : [];
-          
+
           return {
             id: caregiver.elderId,
             reviews: cleanReviews,
@@ -180,12 +188,12 @@ export default function GuardianDashboard() {
       });
 
       const results = await Promise.all(fetchPromises);
-      
+
       results.forEach(result => {
         reviewsData[result.id] = result.reviews;
         ratingsData[result.id] = result.ratings;
       });
-      
+
       setCaregiverReviews(reviewsData);
       setCaregiverRatings(ratingsData);
     } finally {
@@ -308,7 +316,7 @@ export default function GuardianDashboard() {
   // Calculate health score based on latest vital signs
   function calculateHealthScore() {
     if (healthRecords.length === 0) return 0;
-    
+
     const latestRecord = healthRecords[healthRecords.length - 1];
     let score = 0;
     let totalChecks = 0;
@@ -418,8 +426,11 @@ export default function GuardianDashboard() {
         [selectedCaregiver.elderId]: response.data
       }));
 
-      // Refresh caregiver data
-      await fetchCaregiverData([selectedCaregiver]);
+      // Refresh all caregivers' data and reviews
+      await Promise.all([
+        fetchCaregiverData(elders),
+        fetchReviewsData()
+      ]);
 
       handleCloseReviewModal();
     } catch (err) {
@@ -435,24 +446,24 @@ export default function GuardianDashboard() {
     try {
       await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/reviews/delete/${review.reviewId}`,
-        { 
+        {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      
+
       // Remove from local state
       setReviews(prev => {
         const updated = { ...prev };
         delete updated[caregiverId];
         return updated;
       });
-      
+
       // Refresh caregiver data
       const caregiver = elders.find(c => c.elderId === caregiverId);
       if (caregiver) {
         fetchCaregiverData([caregiver]);
       }
-      
+
       toast.success("Review deleted successfully");
     } catch (err) {
       console.error("Error deleting review:", err);
@@ -471,19 +482,19 @@ export default function GuardianDashboard() {
     try {
       await axios.delete(
         `${import.meta.env.VITE_BACKEND_URL}/api/reviews/delete/${reviewId}`,
-        { 
+        {
           headers: { Authorization: `Bearer ${token}` },
           params: { elderId: localStorage.getItem("userEmail") }
         }
       );
-      
+
       // Refresh caregiver data
       const caregiver = elders.find(c => c.elderId === caregiverId);
       if (caregiver) {
         await fetchCaregiverData([caregiver]);
         await fetchReviewsData(); // Refresh user's own reviews
       }
-      
+
       toast.success("Review deleted successfully");
     } catch (err) {
       console.error("Error deleting review:", err);
@@ -633,6 +644,7 @@ export default function GuardianDashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm text-gray-800 truncate">{userEmail}</p>
                 <p className="text-xs text-gray-500">Guardian</p>
+                {userId && <p className="text-xs text-blue-500 font-mono mt-0.5">ID: {userId}</p>}
               </div>
             </div>
             <button onClick={() => setShowProfile(true)} className="w-full text-xs font-medium text-blue-600 hover:underline text-left">
@@ -1063,8 +1075,8 @@ export default function GuardianDashboard() {
                       const caregiverRating = caregiverRatings[caregiver.elderId];
                       const allReviews = caregiverReviews[caregiver.elderId] || [];
                       return (
-                        <motion.div 
-                          key={idx} 
+                        <motion.div
+                          key={idx}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: idx * 0.05 }}
@@ -1150,7 +1162,7 @@ export default function GuardianDashboard() {
                                 <FaUsers className="w-4 h-4" />
                                 Connect Now
                               </button>
-                              
+
                               {!review && (
                                 <button
                                   onClick={() => handleOpenReviewModal(caregiver)}
@@ -1225,7 +1237,7 @@ export default function GuardianDashboard() {
                   <HiOutlineX className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="p-6">
                 <div className="text-center mb-8">
                   <div className="relative inline-block mb-4">
@@ -1313,14 +1325,14 @@ export default function GuardianDashboard() {
                     )}
                   </p>
                 </div>
-                <button 
-                  onClick={() => setShowAllReviewsModal(false)} 
+                <button
+                  onClick={() => setShowAllReviewsModal(false)}
                   className="p-2 hover:bg-gray-200 rounded-full transition"
                 >
                   <HiOutlineX className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="p-6 max-h-[70vh] overflow-y-auto">
                 {/* Rating Distribution Summary */}
                 {caregiverReviews[selectedCaregiverForReviews.elderId]?.length > 0 && (
@@ -1334,7 +1346,7 @@ export default function GuardianDashboard() {
                         {caregiverRatings[selectedCaregiverForReviews.elderId]?.totalReviews} Reviews
                       </p>
                     </div>
-                    
+
                     <div className="flex-1 w-full space-y-2">
                       {[5, 4, 3, 2, 1].map((star) => {
                         const reviews = caregiverReviews[selectedCaregiverForReviews.elderId] || [];
@@ -1344,11 +1356,11 @@ export default function GuardianDashboard() {
                           <div key={star} className="flex items-center gap-3">
                             <span className="text-xs font-bold text-gray-500 w-3">{star}</span>
                             <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                              <motion.div 
+                              <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${percentage}%` }}
                                 transition={{ duration: 0.8, ease: "easeOut" }}
-                                className="h-full bg-yellow-400 rounded-full" 
+                                className="h-full bg-yellow-400 rounded-full"
                               />
                             </div>
                             <span className="text-xs font-bold text-gray-400 w-8">{count}</span>
@@ -1364,8 +1376,8 @@ export default function GuardianDashboard() {
                     {caregiverReviews[selectedCaregiverForReviews.elderId].map((review, idx) => {
                       const isOwnReview = review.elderId === localStorage.getItem("userEmail");
                       return (
-                        <motion.div 
-                          key={idx} 
+                        <motion.div
+                          key={idx}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.05 }}
@@ -1375,9 +1387,9 @@ export default function GuardianDashboard() {
                             <div className="flex-1">
                               <div className="flex items-center gap-4 mb-3">
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 text-lg font-bold shadow-sm border-2 border-white">
-                                  {review.elder?.fullname ? review.elder.fullname.charAt(0).toUpperCase() : 
-                                   review.elderName ? review.elderName.charAt(0).toUpperCase() : 
-                                   review.elderId?.charAt(0).toUpperCase() || 'U'}
+                                  {review.elder?.fullname ? review.elder.fullname.charAt(0).toUpperCase() :
+                                    review.elderName ? review.elderName.charAt(0).toUpperCase() :
+                                      review.elderId?.charAt(0).toUpperCase() || 'U'}
                                 </div>
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
@@ -1389,10 +1401,10 @@ export default function GuardianDashboard() {
                                   <div className="flex items-center gap-3">
                                     <StarRating rating={parseInt(review.rate)} readOnly size="w-3.5 h-3.5" />
                                     <span className="text-[11px] font-semibold text-gray-400">
-                                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-US', { 
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric' 
+                                      {review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
                                       }) : 'Unknown date'}
                                     </span>
                                   </div>
@@ -1404,7 +1416,7 @@ export default function GuardianDashboard() {
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Only show edit/delete for logged-in user's own reviews */}
                             {isOwnReview && (
                               <div className="flex gap-2 ml-4">
@@ -1430,7 +1442,7 @@ export default function GuardianDashboard() {
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                               </div>
-                            )} 
+                            )}
                           </div>
                         </motion.div>
                       );
@@ -1444,7 +1456,7 @@ export default function GuardianDashboard() {
                   </div>
                 )}
               </div>
-              
+
               <div className="bg-gray-50 px-6 py-4 border-t border-gray-100">
                 <button
                   onClick={() => {

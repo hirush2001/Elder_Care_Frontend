@@ -13,6 +13,7 @@ import AdminProfileForm from "./AdminProfile";
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem("userEmail") || "Admin";
+  const userId = localStorage.getItem("elderId");
   const token = localStorage.getItem("token");
 
   // Navigation
@@ -87,19 +88,19 @@ export default function AdminDashboard() {
 
     try {
       // Fetch detailed user profile based on role
-      const endpoint = user.role === 'elder' || user.role === 'admin' 
-        ? `/profile/guardian/profile/${user.elderId}` 
+      const endpoint = user.role === 'elder' || user.role === 'admin'
+        ? `/profile/guardian/profile/${user.elderId}`
         : `/profile/caregiver/profile/${user.elderId}`;
-        
+
       const res = await axios.get(
         `${import.meta.env.VITE_BACKEND_URL}${endpoint}`,
-        { 
-          headers: { 
+        {
+          headers: {
             Authorization: `Bearer ${token}`
-          } 
+          }
         }
       );
-      
+
       // Merge basic user data with detailed profile
       setSelectedUser({
         ...user,
@@ -134,10 +135,10 @@ export default function AdminDashboard() {
   };
 
   const filteredUsers = users.filter((u) => {
-    const matchesSearch = 
+    const matchesSearch =
       u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.fullName?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Apply role filter based on active tab
     if (activeTab === 'caregivers') {
       return matchesSearch && u.role === 'caregiver';
@@ -145,7 +146,7 @@ export default function AdminDashboard() {
     if (activeTab === 'elders') {
       return matchesSearch && u.role === 'elder';
     }
-    
+
     // For users tab, show all users
     return matchesSearch;
   });
@@ -251,6 +252,7 @@ export default function AdminDashboard() {
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm text-gray-800 truncate">{userEmail}</p>
                 <p className="text-xs text-gray-500">Administrator</p>
+                {userId && <p className="text-xs text-purple-500 font-mono mt-0.5">ID: {userId}</p>}
               </div>
             </div>
             <button onClick={fetchAdminProfile} className="w-full text-xs font-medium text-purple-600 hover:underline text-left">
@@ -276,10 +278,10 @@ export default function AdminDashboard() {
               {isSidebarOpen ? <HiOutlineX className="w-5 h-5" /> : <HiOutlineMenu className="w-5 h-5" />}
             </button>
             <h2 className="text-lg font-bold text-gray-800 capitalize">
-              {activeTab === 'overview' ? 'Dashboard' : 
-               activeTab === 'users' ? 'User Management' : 
-               activeTab === 'elders' ? 'Elders' :
-               activeTab === 'caregivers' ? 'Caregivers' : activeTab}
+              {activeTab === 'overview' ? 'Dashboard' :
+                activeTab === 'users' ? 'User Management' :
+                  activeTab === 'elders' ? 'Elders' :
+                    activeTab === 'caregivers' ? 'Caregivers' : activeTab}
             </h2>
           </div>
         </header>
@@ -802,31 +804,30 @@ export default function AdminDashboard() {
             >
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    selectedUser.role === 'elder' ? 'bg-green-100 text-green-600' :
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${selectedUser.role === 'elder' ? 'bg-green-100 text-green-600' :
                     selectedUser.role === 'caregiver' ? 'bg-orange-100 text-orange-600' :
-                    'bg-purple-100 text-purple-600'
-                  }`}>
+                      'bg-purple-100 text-purple-600'
+                    }`}>
                     {selectedUser.role === 'elder' ? <AiOutlineHeart className="w-5 h-5" /> :
                       selectedUser.role === 'caregiver' ? <FaUserTie className="w-5 h-5" /> :
-                      <MdAdminPanelSettings className="w-5 h-5" />}
+                        <MdAdminPanelSettings className="w-5 h-5" />}
                   </div>
                   <div>
                     <h3 className="font-bold text-lg text-gray-800">User Details</h3>
                     <p className="text-sm text-gray-500">
-                      {selectedUser.role === 'elder' ? 'Elder' : 
-                       selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'} Profile
+                      {selectedUser.role === 'elder' ? 'Elder' :
+                        selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'} Profile
                     </p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setShowUserDetails(false)} 
+                <button
+                  onClick={() => setShowUserDetails(false)}
                   className="p-2 hover:bg-gray-200 rounded-full transition"
                 >
                   <HiOutlineX className="w-5 h-5" />
                 </button>
               </div>
-              
+
               <div className="p-6 max-h-[80vh] overflow-y-auto">
                 {userDetailsLoading ? (
                   <div className="text-center py-12">
@@ -844,23 +845,22 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="text-center md:text-left">
                           {selectedUser.profilePicture || selectedUser.detailedProfile?.profilePicture ? (
-                            <img 
-                              src={selectedUser.profilePicture || selectedUser.detailedProfile?.profilePicture} 
-                              alt="Profile" 
-                              className="w-24 h-24 rounded-full object-cover mx-auto md:mx-0 mb-4 border-4 border-white shadow-lg" 
+                            <img
+                              src={selectedUser.profilePicture || selectedUser.detailedProfile?.profilePicture}
+                              alt="Profile"
+                              className="w-24 h-24 rounded-full object-cover mx-auto md:mx-0 mb-4 border-4 border-white shadow-lg"
                             />
                           ) : (
                             <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center mx-auto md:mx-0 mb-4 text-gray-400 text-2xl font-bold">
                               {selectedUser.fullName?.charAt(0) || selectedUser.email?.charAt(0) || 'U'}
                             </div>
                           )}
-                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
-                            selectedUser.role === 'elder' ? 'bg-green-100 text-green-700' :
+                          <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedUser.role === 'elder' ? 'bg-green-100 text-green-700' :
                             selectedUser.role === 'caregiver' ? 'bg-orange-100 text-orange-700' :
-                            'bg-purple-100 text-purple-700'
-                          }`}>
-                            {selectedUser.role === 'elder' ? 'Elder' : 
-                             selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'}
+                              'bg-purple-100 text-purple-700'
+                            }`}>
+                            {selectedUser.role === 'elder' ? 'Elder' :
+                              selectedUser.role === 'caregiver' ? 'Caregiver' : 'Administrator'}
                           </span>
                         </div>
                         <div className="space-y-3">
