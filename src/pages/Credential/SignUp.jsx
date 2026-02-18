@@ -44,7 +44,7 @@ export default function SignUp() {
       color: "from-teal-500 to-emerald-400",
       text: "text-teal-600",
       Icon: UserGroupIcon,
-    },
+    }/*,
     {
       id: "Admin",
       title: "Admin",
@@ -52,7 +52,7 @@ export default function SignUp() {
       color: "from-amber-500 to-orange-400",
       text: "text-amber-600",
       Icon: ShieldCheckIcon,
-    },
+    },*/
   ];
 
   const convertRole = (r) => {
