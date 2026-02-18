@@ -843,7 +843,7 @@ export default function GuardianDashboard() {
               </motion.div>
             )}
 
-            {/* Health Records Section */}
+            {/* Health Records Section in guardian dashboard */}
             {activeTab === "health" && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
