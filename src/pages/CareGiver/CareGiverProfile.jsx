@@ -13,7 +13,7 @@ export default function CaregiverProfileForm({ regId }) {
 
   const navigate = useNavigate();
 
-  // Fetch caregiver profile
+  // Fetch caregiver profiles 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
